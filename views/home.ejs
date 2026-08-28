@@ -1,0 +1,144 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-inner">
+            <a href="/home/<%=uname%>" class="brand-logo">
+                <div class="brand-icon-box">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-7a2 2 0 0 1 2-2h4v9"/>
+                        <path d="M3 13h18"/>
+                        <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/>
+                        <path d="M16 6v4M14 8h4"/>
+                    </svg>
+                </div>
+                <span>HOSPITAL <span class="accent">SPACE</span></span>
+            </a>
+
+            <nav>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="/home/<%=uname%>" class="nav-link active">Home</a></li>
+                    <li><a href="/home/patient/<%=uname%>" class="nav-link">Manage Patients</a></li>
+                    <li><a href="/history/<%=uname%>" class="nav-link">Track Patients</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <span class="user-avatar-dot"></span>
+                    <span><%= uname %></span>
+                </div>
+
+                <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <a href="/" class="btn btn-secondary btn-sm">Sign Out</a>
+
+                <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <main class="app-container">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="hero-badge">Priority Queue System</div>
+                <h1 class="hero-title">Hospital Management <span>Made Fast &amp; Fair</span></h1>
+                <p class="hero-desc">
+                    Prioritize patient treatment and bed allocation using a Max-Heap priority queue. Medical urgency is dynamically calculated based on patient condition, age group, and elapsed wait time.
+                </p>
+
+                <!-- Action Cards -->
+                <div class="home-action-grid">
+                    <article class="action-card">
+                        <div class="action-card-header">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Manage Patients</h3>
+                                <p>Admit new patients into the triage queue or discharge patients upon completion of treatment.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/home/patient/<%=uname%>" class="btn btn-primary btn-block">
+                                <span>Admission &amp; Discharge</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </div>
+                    </article>
+
+                    <article class="action-card">
+                        <div class="action-card-header">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Track Patients</h3>
+                                <p>Monitor the live priority queue sorted in descending score order by the backend Max-Heap.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/history/<%=uname%>" class="btn btn-secondary btn-block">
+                                <span>View Live Priority Queue</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="app-container footer-inner">
+            <div><strong>HOSPITAL SPACE</strong> &mdash; Priority Queue System</div>
+            <div>Computer Engineering Mini Project</div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        if (hamburgerBtn && navMenu) {
+            hamburgerBtn.addEventListener('click', () => {
+                const isOpen = navMenu.classList.toggle('open');
+                hamburgerBtn.classList.toggle('open', isOpen);
+            });
+        }
+    </script>
+</body>
+</html>

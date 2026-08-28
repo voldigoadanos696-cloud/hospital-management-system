@@ -1,0 +1,74 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <div class="auth-page-container">
+        <!-- Floating Theme Button -->
+        <div style="position: absolute; top: 16px; right: 20px;">
+            <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-icon-badge" style="background: var(--urgency-standard-bg); color: var(--urgency-standard);">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7.5" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                </div>
+                <h2>Register Account</h2>
+                <p>Create a hospital staff login</p>
+            </div>
+
+            <form method="post" action="/register" class="auth-form">
+                <div class="form-group">
+                    <label for="uname" class="form-label">Username</label>
+                    <div class="form-input-wrap">
+                        <span class="form-input-icon">👤</span>
+                        <input type="text" placeholder="Enter username" name="uname" class="form-control form-control-icon" id="uname" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="upass" class="form-label">Password</label>
+                    <div class="form-input-wrap">
+                        <span class="form-input-icon">🔒</span>
+                        <input type="password" placeholder="Enter password" name="upass" class="form-control form-control-icon" id="upass" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 6px;">Register</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already registered? <a href="/" style="font-weight: 600;">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+    </script>
+</body>
+</html>

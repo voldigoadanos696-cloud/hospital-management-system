@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospital Bed Allocation System | Priority Queue Mini Project</title>
+  <meta name="description" content="A priority-queue based hospital bed allocation system built with HTML, CSS and JavaScript." />
+
+  <!-- Google Fonts: Outfit for headings, Inter for body text, IBM Plex Mono for data/counters -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== PAGE LOADER ===================== -->
+  <!-- Simple loading animation shown while the page first paints -->
+  <div id="page-loader" aria-hidden="true">
+    <div class="loader-pulse">
+      <svg viewBox="0 0 120 40" class="loader-ecg">
+        <polyline points="0,20 25,20 32,5 40,35 48,20 120,20" />
+      </svg>
+      <span>Loading Ward Data...</span>
+    </div>
+  </div>
+
+  <!-- ===================== NAVIGATION ===================== -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo">
+        <span class="logo-icon" aria-hidden="true">
+          <!-- simple bed + cross icon -->
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 18v-7a2 2 0 0 1 2-2h4v9" />
+            <path d="M3 13h18" />
+            <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10" />
+            <path d="M16 6v4M14 8h4" />
+          </svg>
+        </span>
+        Hospital Bed Allocation System
+      </a>
+
+      <!-- Desktop nav links -->
+      <nav class="nav-links" id="nav-links">
+        <a href="#home" class="nav-link">Home</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#registration" class="nav-link">Register</a>
+        <a href="#simulation" class="nav-link">Simulation</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#algorithm" class="nav-link">Algorithm</a>
+        <a href="#team" class="nav-link">Team</a>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Dark / Light mode toggle -->
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode" title="Toggle dark / light mode">
+          <span id="theme-icon">🌙</span>
+        </button>
+
+        <!-- Hamburger button for mobile -->
+        <button id="hamburger" class="hamburger" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== HERO SECTION ===================== -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <p class="eyebrow">Semester 3 &middot; Computer Engineering Mini Project</p>
+      <h1>Priority-Based Hospital <span>Bed Allocation</span></h1>
+      <p class="hero-desc">
+        Hospital beds are limited, but emergencies aren't. This system assigns beds using a
+        <strong>priority queue</strong> — critical patients are treated first, and patients with the
+        same priority are served on a first-come, first-served basis. The result: shorter waiting
+        times and better bed utilization.
+      </p>
+      <div class="hero-buttons">
+        <a href="#registration" class="btn btn-primary">Get Started</a>
+        <a href="#about" class="btn btn-outline">Learn More</a>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <!-- Signature illustration: a triage monitor showing a hospital bed row + live ECG pulse -->
+      <svg viewBox="0 0 420 340" class="hero-svg">
+        <!-- monitor frame -->
+        <rect x="30" y="20" width="360" height="180" rx="18" class="svg-panel" />
+        <polyline id="ecg-line" points="50,110 90,110 100,70 115,150 130,110 190,110 200,90 210,130 220,110 370,110" class="svg-ecg" />
+        <circle cx="365" cy="40" r="5" class="svg-dot dot-a" />
+        <circle cx="365" cy="40" r="5" class="svg-dot dot-b" />
+
+        <!-- hospital beds row -->
+        <g class="svg-beds">
+          <!-- bed 1 - occupied critical -->
+          <g transform="translate(45,225)">
+            <rect width="80" height="45" rx="8" class="bed-frame" />
+            <rect x="6" y="8" width="68" height="14" rx="6" class="bed-pillow" />
+            <rect x="0" y="0" width="8" height="45" rx="4" class="bed-tag tag-critical" />
+          </g>
+          <!-- bed 2 - occupied serious -->
+          <g transform="translate(150,225)">
+            <rect width="80" height="45" rx="8" class="bed-frame" />
+            <rect x="6" y="8" width="68" height="14" rx="6" class="bed-pillow" />
+            <rect x="0" y="0" width="8" height="45" rx="4" class="bed-tag tag-serious" />
+          </g>
+          <!-- bed 3 - available -->
+          <g transform="translate(255,225)">
+            <rect width="80" height="45" rx="8" class="bed-frame bed-empty" />
+            <rect x="6" y="8" width="68" height="14" rx="6" class="bed-pillow bed-pillow-empty" />
+          </g>
+          <!-- bed 4 - available -->
+          <g transform="translate(345,225)" transform-origin="345 225">
+            <rect width="30" height="45" rx="8" class="bed-frame bed-empty" style="opacity:.5" />
+          </g>
+        </g>
+        <text x="45" y="300" class="svg-caption">Ward view — bed status updates live as beds are allocated</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT SECTION ===================== -->
+  <section class="section" id="about">
+    <div class="section-heading">
+      <p class="eyebrow">About the System</p>
+      <h2>Why a Priority Queue?</h2>
+      <p class="section-sub">Hospitals can't scale beds instantly — so the order in which patients receive them matters.</p>
+    </div>
+
+    <div class="card-grid about-grid">
+      <article class="card">
+        <div class="card-icon">🛏️</div>
+        <h3>Limited Hospital Beds</h3>
+        <p>Every hospital has a fixed number of beds. During surges, demand often outpaces supply, so allocation decisions must be fast and fair.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">📊</div>
+        <h3>Priority Queue Concept</h3>
+        <p>Instead of a plain line, patients are placed in a queue ordered by medical urgency (Priority 1 = most critical, 5 = least urgent).</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">⏱️</div>
+        <h3>FCFS Within Same Priority</h3>
+        <p>When two patients share the same priority level, the one who arrived first is allocated a bed first — keeping the process transparent.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">📉</div>
+        <h3>Reducing Waiting Time</h3>
+        <p>By always serving the most urgent case next, average waiting time for critical patients drops significantly compared to random assignment.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">✅</div>
+        <h3>Better Bed Utilization</h3>
+        <p>Beds are freed and reassigned systematically, reducing idle capacity and making sure no bed sits empty while a critical patient waits.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-icon">🧩</div>
+        <h3>Simple, Extensible Logic</h3>
+        <p>The whole system is built on arrays and sorting — easy to understand today, and easy to connect to a real database tomorrow.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===================== PATIENT REGISTRATION FORM ===================== -->
+  <section class="section section-tint" id="registration">
+    <div class="section-heading">
+      <p class="eyebrow">Step 1</p>
+      <h2>Patient Registration</h2>
+      <p class="section-sub">This is a frontend-only demo — no data is sent to a server or saved to a database.</p>
+    </div>
+
+    <form id="registration-form" class="form-card" novalidate>
+      <div class="form-grid">
+
+        <div class="form-field">
+          <label for="patient-name">Patient Name</label>
+          <input type="text" id="patient-name" name="patientName" placeholder="e.g. Asha Verma" />
+          <span class="error-msg" data-error-for="patient-name"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-age">Age</label>
+          <input type="number" id="patient-age" name="age" min="0" max="120" placeholder="e.g. 34" />
+          <span class="error-msg" data-error-for="patient-age"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-gender">Gender</label>
+          <select id="patient-gender" name="gender">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <span class="error-msg" data-error-for="patient-gender"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-contact">Contact Number</label>
+          <input type="tel" id="patient-contact" name="contact" placeholder="10-digit number" />
+          <span class="error-msg" data-error-for="patient-contact"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-blood">Blood Group</label>
+          <select id="patient-blood" name="bloodGroup">
+            <option value="">Select blood group</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+            <option>O+</option><option>O-</option>
+          </select>
+          <span class="error-msg" data-error-for="patient-blood"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-disease">Disease / Condition</label>
+          <input type="text" id="patient-disease" name="disease" placeholder="e.g. Cardiac Arrest" />
+          <span class="error-msg" data-error-for="patient-disease"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-hospital">Hospital Name</label>
+          <input type="text" id="patient-hospital" name="hospitalName" placeholder="e.g. City Care Hospital" />
+          <span class="error-msg" data-error-for="patient-hospital"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-ward">Required Ward</label>
+          <select id="patient-ward" name="ward">
+            <option value="">Select ward</option>
+            <option>ICU</option>
+            <option>Emergency</option>
+            <option>General</option>
+            <option>Pediatric</option>
+            <option>Maternity</option>
+            <option>Surgery Recovery</option>
+          </select>
+          <span class="error-msg" data-error-for="patient-ward"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-priority">Emergency Level</label>
+          <select id="patient-priority" name="priority">
+            <option value="">Select priority</option>
+            <option value="1">Priority 1 — Critical</option>
+            <option value="2">Priority 2 — Serious</option>
+            <option value="3">Priority 3 — Moderate</option>
+            <option value="4">Priority 4 — Normal</option>
+            <option value="5">Priority 5 — Low</option>
+          </select>
+          <span class="error-msg" data-error-for="patient-priority"></span>
+        </div>
+
+        <div class="form-field">
+          <label for="patient-arrival">Arrival Time</label>
+          <input type="time" id="patient-arrival" name="arrivalTime" />
+          <span class="error-msg" data-error-for="patient-arrival"></span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary form-submit">Register Patient</button>
+    </form>
+
+    <!-- Table showing registered patients (populated by JS) -->
+    <div class="table-wrap" id="registration-table-wrap" hidden>
+      <h3>Registered Patients</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="registration-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Name</th><th>Age</th><th>Gender</th><th>Contact</th>
+              <th>Blood Group</th><th>Condition</th><th>Hospital</th><th>Ward</th>
+              <th>Priority</th><th>Arrival</th>
+            </tr>
+          </thead>
+          <tbody id="registration-table-body">
+            <!-- rows injected by script.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRIORITY QUEUE SIMULATION ===================== -->
+  <section class="section" id="simulation">
+    <div class="section-heading">
+      <p class="eyebrow">Step 2</p>
+      <h2>Priority Queue Simulation</h2>
+      <p class="section-sub">Add sample patients, then allocate beds in priority order (Priority 1 first, FCFS within the same priority).</p>
+    </div>
+
+    <div class="sim-controls">
+      <button id="add-sample-btn" class="btn btn-outline">+ Add Sample Patient</button>
+      <button id="allocate-btn" class="btn btn-primary">Allocate Bed</button>
+      <button id="reset-queue-btn" class="btn btn-danger-outline">Reset Queue</button>
+    </div>
+
+    <div class="table-wrap">
+      <h3>Bed Allocation Order</h3>
+      <p class="hint-text">Click <strong>Allocate Bed</strong> to sort the current waiting queue and generate the allocation order below.</p>
+      <div class="table-scroll">
+        <table class="data-table" id="allocation-table">
+          <thead>
+            <tr><th>S. No.</th><th>Patient</th><th>Priority</th><th>Arrival Time</th><th>Ward</th><th>Status</th></tr>
+          </thead>
+          <tbody id="allocation-table-body">
+            <tr class="empty-row"><td colspan="6">No allocations yet — add patients to the queue below.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HOSPITAL STATISTICS DASHBOARD ===================== -->
+  <section class="section section-tint" id="dashboard">
+    <div class="section-heading">
+      <p class="eyebrow">Live Overview</p>
+      <h2>Hospital Statistics Dashboard</h2>
+      <p class="section-sub">Numbers update automatically as patients are queued and beds are allocated.</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">🏥</span>
+        <span class="stat-value" id="stat-total" data-target="50">0</span>
+        <span class="stat-label">Total Beds</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🛌</span>
+        <span class="stat-value" id="stat-occupied" data-target="22">0</span>
+        <span class="stat-label">Occupied Beds</span>
+      </div>
+      <div class="stat-card stat-highlight">
+        <span class="stat-icon">✅</span>
+        <span class="stat-value" id="stat-available" data-target="28">0</span>
+        <span class="stat-label">Available Beds</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-value" id="stat-waiting" data-target="0">0</span>
+        <span class="stat-label">Waiting Patients</span>
+      </div>
+      <div class="stat-card stat-critical">
+        <span class="stat-icon">🚨</span>
+        <span class="stat-value" id="stat-critical" data-target="0">0</span>
+        <span class="stat-label">Critical Patients</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== QUEUE VISUALIZATION ===================== -->
+  <section class="section" id="queue-visualization">
+    <div class="section-heading">
+      <p class="eyebrow">Live View</p>
+      <h2>Queue Visualization</h2>
+      <p class="section-sub">Each card is color-coded by emergency level. Allocated patients move to the ward below.</p>
+    </div>
+
+    <!-- Legend for priority colors -->
+    <div class="legend">
+      <span class="legend-item"><i class="dot dot-p1"></i>Priority 1 — Critical</span>
+      <span class="legend-item"><i class="dot dot-p2"></i>Priority 2 — Serious</span>
+      <span class="legend-item"><i class="dot dot-p3"></i>Priority 3 — Moderate</span>
+      <span class="legend-item"><i class="dot dot-p4"></i>Priority 4 — Normal</span>
+      <span class="legend-item"><i class="dot dot-p5"></i>Priority 5 — Low</span>
+    </div>
+
+    <h3 class="subsection-title">Waiting Patients</h3>
+    <div class="patient-cards" id="waiting-cards">
+      <p class="empty-state" id="waiting-empty">No patients waiting. Add some from the Simulation section above.</p>
+    </div>
+
+    <h3 class="subsection-title">Allocated Beds</h3>
+    <div class="patient-cards" id="allocated-cards">
+      <p class="empty-state" id="allocated-empty">No beds allocated yet.</p>
+    </div>
+  </section>
+
+  <!-- ===================== ALGORITHM FLOWCHART ===================== -->
+  <section class="section section-tint" id="algorithm">
+    <div class="section-heading">
+      <p class="eyebrow">Under the Hood</p>
+      <h2>How the Algorithm Works</h2>
+      <p class="section-sub">A simple, six-step flow built entirely with JavaScript arrays and sorting.</p>
+    </div>
+
+    <div class="flowchart">
+      <div class="flow-step"><span class="flow-num">1</span>Patient Arrives</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step"><span class="flow-num">2</span>Assign Priority</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step"><span class="flow-num">3</span>Add to Queue</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step"><span class="flow-num">4</span>Sort Queue</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step"><span class="flow-num">5</span>Allocate Bed</div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step flow-final"><span class="flow-num">6</span>Update Dashboard</div>
+    </div>
+  </section>
+
+  <!-- ===================== TEAM SECTION ===================== -->
+  <section class="section" id="team">
+    <div class="section-heading">
+      <p class="eyebrow">Made By</p>
+      <h2>Project Team</h2>
+      <p class="section-sub">Semester 3, Computer Engineering</p>
+    </div>
+
+    <div class="card-grid team-grid">
+      <article class="team-card">
+        <div class="avatar" style="--avatar-bg:#1d6fa5">SC</div>
+        <h4>Swayam Chougale</h4>
+        <p>Frontend &amp; UI Design</p>
+      </article>
+      <article class="team-card">
+        <div class="avatar" style="--avatar-bg:#2fa876">JG</div>
+        <h4>Jayesh Gaikwad</h4>
+        <p>Backend &amp; Algorithms</p>
+      </article>
+      <article class="team-card">
+        <div class="avatar" style="--avatar-bg:#f2994a">SH</div>
+        <h4>Soham Hinge</h4>
+        <p>Database Manager</p>
+      </article>
+      <article class="team-card">
+        <div class="avatar" style="--avatar-bg:#e5484d">VI</div>
+        <h4>Vedant Ingale</h4>
+        <p>Frontend &amp; UI Design</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p class="footer-title">Hospital Bed Allocation System</p>
+      <p>Mini Project &middot; Semester 3 &middot; Computer Engineering</p>
+      <p class="footer-copy">&copy; <span id="footer-year"></span> All rights reserved. Built for academic purposes only.</p>
+    </div>
+  </footer>
+
+  <!-- ===================== TOAST / POPUP NOTIFICATION ===================== -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Back to top button -->
+  <button id="back-to-top" class="back-to-top" aria-label="Back to top">↑</button>
+
+  <script src="script.js"></script>
+</body>
+</html>

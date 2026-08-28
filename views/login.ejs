@@ -1,0 +1,74 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <div class="auth-page-container">
+        <!-- Floating Theme Button -->
+        <div style="position: absolute; top: 16px; right: 20px;">
+            <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-icon-badge">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-7a2 2 0 0 1 2-2h4v9"/>
+                        <path d="M3 13h18"/>
+                        <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/>
+                        <path d="M16 6v4M14 8h4"/>
+                    </svg>
+                </div>
+                <h2>HOSPITAL SPACE</h2>
+                <p>Priority Queue &amp; Patient Care System</p>
+            </div>
+
+            <form method="post" action="/login" class="auth-form">
+                <div class="form-group">
+                    <label for="uname" class="form-label">Username</label>
+                    <div class="form-input-wrap">
+                        <span class="form-input-icon">👤</span>
+                        <input type="text" placeholder="Enter username" name="uname" class="form-control form-control-icon" id="uname" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="upass" class="form-label">Password</label>
+                    <div class="form-input-wrap">
+                        <span class="form-input-icon">🔒</span>
+                        <input type="password" placeholder="Enter password" name="upass" class="form-control form-control-icon" id="upass" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 6px;">Sign In</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Need an account? <a href="/register" style="font-weight: 600;">Register Hospital</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+    </script>
+</body>
+</html>

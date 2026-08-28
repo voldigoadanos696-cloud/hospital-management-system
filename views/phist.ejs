@@ -1,0 +1,190 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-inner">
+            <a href="/home/<%=uname%>" class="brand-logo">
+                <div class="brand-icon-box">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-7a2 2 0 0 1 2-2h4v9"/>
+                        <path d="M3 13h18"/>
+                        <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/>
+                        <path d="M16 6v4M14 8h4"/>
+                    </svg>
+                </div>
+                <span>HOSPITAL <span class="accent">SPACE</span></span>
+            </a>
+
+            <nav>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="/home/<%=uname%>" class="nav-link">Home</a></li>
+                    <li><a href="/home/patient/<%=uname%>" class="nav-link">Manage Patients</a></li>
+                    <li><a href="/history/<%=uname%>" class="nav-link active">Track Patients</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <span class="user-avatar-dot"></span>
+                    <span><%= uname %></span>
+                </div>
+
+                <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <a href="/" class="btn btn-secondary btn-sm">Sign Out</a>
+
+                <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <main class="app-container">
+            <div class="section-header section-header-flex">
+                <div>
+                    <div class="section-subtitle">Clinical File</div>
+                    <h1 class="section-title">Patient Dossier</h1>
+                </div>
+                <div>
+                    <a href="/history/<%=uname%>" class="btn btn-secondary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span>Back to Priority Queue</span>
+                    </a>
+                </div>
+            </div>
+
+            <% if (p) { %>
+                <% 
+                    let badgeClass = "badge-standard";
+                    let badgeLabel = "Standard Priority";
+                    if (p.score >= 50) {
+                        badgeClass = "badge-critical";
+                        badgeLabel = "Critical Priority";
+                    } else if (p.score >= 35) {
+                        badgeClass = "badge-high";
+                        badgeLabel = "High Priority";
+                    } else if (p.score >= 25) {
+                        badgeClass = "badge-moderate";
+                        badgeLabel = "Moderate Priority";
+                    }
+                %>
+                <div class="dossier-card">
+                    <div class="dossier-header">
+                        <div>
+                            <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--primary-cyan);">
+                                RECORD #<%= p.id %>
+                            </span>
+                            <h2 style="margin-top: 2px;"><%= p.name %></h2>
+                            <p>Admin: <strong><%= p.uname || uname %></strong></p>
+                        </div>
+                        <div>
+                            <span class="priority-badge <%= badgeClass %>" style="font-size: 0.9rem; padding: 5px 14px;">
+                                <%= badgeLabel %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dossier-body">
+                        <!-- Metadata Grid -->
+                        <div class="dossier-grid">
+                            <div class="dossier-item">
+                                <div class="meta-label">Patient Age</div>
+                                <div class="meta-val"><%= p.age %> yrs</div>
+                            </div>
+                            <div class="dossier-item">
+                                <div class="meta-label">Condition</div>
+                                <div class="meta-val" style="font-size: 1.05rem;"><%= p.dis %></div>
+                            </div>
+                            <div class="dossier-item">
+                                <div class="meta-label">Wait Time</div>
+                                <div class="meta-val"><%= p.wait != null ? p.wait : 0 %> hrs</div>
+                            </div>
+                            <div class="dossier-item">
+                                <div class="meta-label">Triage Score</div>
+                                <div class="meta-val" style="color: var(--primary-blue);"><%= p.score %> pts</div>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Notes -->
+                        <div class="dossier-notes">
+                            <h4>Clinical Description &amp; Diagnosis Notes</h4>
+                            <p><%= p.descp && p.descp.trim() ? p.descp : 'No clinical description recorded.' %></p>
+                        </div>
+                    </div>
+
+                    <div class="dossier-footer">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <form action="/history/<%=uname%>" style="display: inline-block;">
+                                <button type="submit" class="btn btn-secondary">
+                                    <span>Back to Queue</span>
+                                </button>
+                            </form>
+                            <form action="/home/<%=uname%>" style="display: inline-block;">
+                                <button type="submit" class="btn btn-secondary">
+                                    <span>Home</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div>
+                            <button type="button" class="btn btn-primary" onclick="window.print()">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <span>Print Dossier</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="card-box" style="text-align: center; padding: 40px 20px; max-width: 500px; margin: 30px auto;">
+                    <h3>Patient Record Not Found</h3>
+                    <p style="margin: 10px 0 20px;">Could not retrieve the requested patient record.</p>
+                    <a href="/history/<%=uname%>" class="btn btn-primary">Return to Queue</a>
+                </div>
+            <% } %>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="app-container footer-inner">
+            <div><strong>HOSPITAL SPACE</strong> &mdash; Priority Queue System</div>
+            <div>Computer Engineering Mini Project</div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        if (hamburgerBtn && navMenu) {
+            hamburgerBtn.addEventListener('click', () => {
+                const isOpen = navMenu.classList.toggle('open');
+                hamburgerBtn.classList.toggle('open', isOpen);
+            });
+        }
+    </script>
+</body>
+</html>

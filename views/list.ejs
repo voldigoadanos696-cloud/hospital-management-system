@@ -1,0 +1,218 @@
+<%- include("includes/head.ejs"); %>
+
+    <body>
+        <!-- Navigation Bar -->
+        <header class="navbar">
+            <div class="nav-inner">
+                <a href="/home/<%=uname%>" class="brand-logo">
+                    <div class="brand-icon-box">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-7a2 2 0 0 1 2-2h4v9" />
+                            <path d="M3 13h18" />
+                            <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10" />
+                            <path d="M16 6v4M14 8h4" />
+                        </svg>
+                    </div>
+                    <span>HOSPITAL <span class="accent">SPACE</span></span>
+                </a>
+
+                <nav>
+                    <ul class="nav-menu" id="nav-menu">
+                        <li><a href="/home/<%=uname%>" class="nav-link">Home</a></li>
+                        <li><a href="/home/patient/<%=uname%>" class="nav-link active">Manage Patients</a></li>
+                        <li><a href="/history/<%=uname%>" class="nav-link">Track Patients</a></li>
+                    </ul>
+                </nav>
+
+                <div class="nav-actions">
+                    <div class="user-badge">
+                        <span class="user-avatar-dot"></span>
+                        <span>
+                            <%= uname %>
+                        </span>
+                    </div>
+
+                    <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+
+                    <a href="/" class="btn btn-secondary btn-sm">Sign Out</a>
+
+                    <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <main class="app-container">
+                <div class="section-header section-header-flex">
+                    <div>
+                        <div class="section-subtitle">Triage &amp; Admission</div>
+                        <h1 class="section-title">Patient Management</h1>
+                    </div>
+                    <div>
+                        <a href="/history/<%=uname%>" class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                            <span>View Live Priority Queue</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="management-grid">
+                    <!-- Patient Admission Card -->
+                    <div class="card-box">
+                        <div class="card-box-header">
+                            <div>
+                                <h2>Patient Admission</h2>
+                                <p>Enter patient data to calculate priority score and enqueue</p>
+                            </div>
+                            <span class="priority-badge badge-standard">Admission</span>
+                        </div>
+
+                        <form method="post" action="/list/<%=uname%>" id="add-patient-form">
+                            <div class="form-2col">
+                                <div class="form-group">
+                                    <label for="l-id" class="form-label">Patient ID</label>
+                                    <input type="number" placeholder="e.g. 101" name="pid" class="form-control"
+                                        id="l-id" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="l-name" class="form-label">Patient Full Name</label>
+                                    <input type="text" placeholder="e.g. John Doe" name="pname" class="form-control"
+                                        id="l-name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="l-age" class="form-label">Age (Years)</label>
+                                    <input type="number" placeholder="e.g. 45" name="page" class="form-control"
+                                        id="l-age" min="0" max="130" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="l-wait" class="form-label">Wait Time (Hours)</label>
+                                    <input type="number" placeholder="e.g. 3" name="pwait" class="form-control"
+                                        id="l-wait" min="0" required>
+                                </div>
+
+                                <div class="form-group form-full">
+                                    <label for="l-dis" class="form-label">Disease / Condition</label>
+                                    <input type="text" list="disease-list"
+                                        placeholder="e.g. Heart Attack, Malaria, Dengue..." name="pdis"
+                                        class="form-control" id="l-dis" required autocomplete="off">
+                                    <datalist id="disease-list">
+                                        <option value="Heart Attack"></option>
+                                        <option value="Stroke"></option>
+                                        <option value="Accident"></option>
+                                        <option value="Cancer"></option>
+                                        <option value="Typhoid"></option>
+                                        <option value="Malaria"></option>
+                                        <option value="Dengue"></option>
+                                        <option value="Diarrhea"></option>
+                                        <option value="Fever"></option>
+                                        <option value="Cold"></option>
+                                    </datalist>
+                                </div>
+
+                                <div class="form-group form-full">
+                                    <label for="l-descp" class="form-label">Clinical Description / Notes</label>
+                                    <textarea placeholder="Enter brief diagnosis notes or symptoms..." name="descp"
+                                        class="form-control" id="l-descp" required></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Real-time Score Preview matching backend getScore -->
+                            <div class="score-preview-box">
+                                <div>
+                                    <strong style="font-size: 0.85rem; color: var(--primary-navy);">Estimated Triage
+                                        Score:</strong>
+                                    <span
+                                        style="font-size: 0.78rem; color: var(--text-muted); display: block;">Calculated
+                                        using Age, Disease &amp; Wait formula</span>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--primary-blue);"
+                                    id="estimated-score-val">--</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="l-btn1"
+                                style="margin-top: 18px;">
+                                <span>Add Patient to Queue</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Patient Discharge Card -->
+                    <div class="card-box" style="border-top: 3px solid var(--urgency-critical);">
+                        <div class="card-box-header">
+                            <div>
+                                <h2>Discharge Patient</h2>
+                                <p>Remove patient upon completion of care</p>
+                            </div>
+                            <span class="priority-badge badge-critical">Discharge</span>
+                        </div>
+
+                        <form method="POST" action="/list/<%=uname%>?_method=DELETE" id="discharge-form">
+                            <div class="form-group">
+                                <label for="l-rem" class="form-label">Patient ID to Discharge</label>
+                                <input type="number" placeholder="Enter Patient ID" name="pid" class="form-control"
+                                    id="l-rem" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger btn-block" id="l-btn2"
+                                style="margin-top: 16px;">
+                                <span>Discharge &amp; Remove</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="app-container footer-inner">
+                <div><strong>HOSPITAL SPACE</strong> &mdash; Priority Queue System</div>
+                <div>Computer Engineering Mini Project</div>
+            </div>
+        </footer>
+
+        <script src="/list.js"></script>
+        <script>
+            const btn = document.getElementById('theme-btn');
+            const icon = document.getElementById('theme-icon');
+            function sync() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+            }
+            sync();
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    if (isDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.setItem('hospital_theme', 'light');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('hospital_theme', 'dark');
+                    }
+                    sync();
+                });
+            }
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const navMenu = document.getElementById('nav-menu');
+            if (hamburgerBtn && navMenu) {
+                hamburgerBtn.addEventListener('click', () => {
+                    const isOpen = navMenu.classList.toggle('open');
+                    hamburgerBtn.classList.toggle('open', isOpen);
+                });
+            }
+        </script>
+    </body>
+
+    </html>
