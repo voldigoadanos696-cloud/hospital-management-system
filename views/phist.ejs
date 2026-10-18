@@ -107,6 +107,26 @@
                                 <div class="meta-label">Triage Score</div>
                                 <div class="meta-val" style="color: var(--primary-blue);"><%= p.score %> pts</div>
                             </div>
+                            <div class="dossier-item">
+                                <div class="meta-label">Assigned Ward</div>
+                                <div class="meta-val"><%= p.ward_name ? (p.ward_name + ' (' + p.ward_code + ')') : (p.allocation_status === 'NEEDS_REVIEW' ? 'Review Required ⚠️' : 'Unassigned') %></div>
+                            </div>
+                            <div class="dossier-item">
+                                <div class="meta-label">Bed Allocation</div>
+                                <div class="meta-val" style="color: var(--primary-navy);">
+                                    <% if (p.allocation_status === 'ALLOCATED') { %>
+                                        🛏️ Bed <%= p.bed_number %> (<%= p.ward_code %>)
+                                    <% } else if (p.allocation_status === 'WAITING') { %>
+                                        ⏳ Waiting Queue (<%= p.ward_code || 'Bed' %>)
+                                    <% } else if (p.allocation_status === 'NEEDS_REVIEW') { %>
+                                        ⚠️ Clinical Review Required
+                                    <% } else if (p.allocation_status === 'DISCHARGED') { %>
+                                        ✅ Discharged
+                                    <% } else { %>
+                                        Registered
+                                    <% } %>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Clinical Notes -->

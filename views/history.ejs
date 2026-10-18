@@ -59,7 +59,7 @@
                 </div>
             </div>
 
-            <!-- Real Database Summary Metric Chips -->
+            <!-- Real Database Summary Metric Chips & Bed Occupancy -->
             <div class="stats-row">
                 <div class="stat-item">
                     <div class="stat-icon-circle stat-icon-blue">
@@ -70,7 +70,37 @@
                     </div>
                     <div>
                         <div class="stat-val"><%= patient.length %></div>
-                        <div class="stat-name">Total In Queue</div>
+                        <div class="stat-name">Total Patients</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-green">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-7a2 2 0 0 1 2-2h4v9" />
+                            <path d="M3 13h18" />
+                            <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10" />
+                            <path d="M16 6v4M14 8h4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val">
+                            <%= typeof bedSummary !== 'undefined' && bedSummary.totals ? (bedSummary.totals.total_available || 0) : 0 %> / <%= typeof bedSummary !== 'undefined' && bedSummary.totals ? (bedSummary.totals.total_beds || 0) : 0 %>
+                        </div>
+                        <div class="stat-name">Beds Available</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-orange">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= patient.filter(p => p.allocation_status === 'WAITING').length %></div>
+                        <div class="stat-name">Waiting For Bed</div>
                     </div>
                 </div>
 
@@ -87,40 +117,16 @@
                         <div class="stat-name">Critical (&ge;50 pts)</div>
                     </div>
                 </div>
-
-                <div class="stat-item">
-                    <div class="stat-icon-circle stat-icon-orange">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-val"><%= patient.filter(p => p.score >= 35 && p.score < 50).length %></div>
-                        <div class="stat-name">High (35-49 pts)</div>
-                    </div>
-                </div>
-
-                <div class="stat-item">
-                    <div class="stat-icon-circle stat-icon-green">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-val"><%= patient.filter(p => p.score < 35).length %></div>
-                        <div class="stat-name">Standard (&lt;35 pts)</div>
-                    </div>
-                </div>
             </div>
 
             <!-- Priority Queue Table Card -->
             <div class="table-card">
                 <div class="table-toolbar">
                     <div class="search-wrap">
-                        <input type="text" id="queue-search" class="search-input" placeholder="Search by name, ID, or condition...">
+                        <input type="text" id="queue-search" class="search-input" placeholder="Search by name, ID, condition, or bed...">
                     </div>
                     <div style="font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-mono);">
-                        Queue Sorting: <strong>Max-Heap Descending</strong>
+                        Queue Sorting: <strong>Max-Heap Descending + FCFS</strong>
                     </div>
                 </div>
 
@@ -128,7 +134,7 @@
                     <div class="empty-state">
                         <div style="font-size: 2.5rem;">📋</div>
                         <h3>Queue is Currently Empty</h3>
-                        <p style="max-width: 380px; font-size: 0.9rem;">No patients waiting in queue. Admit patients using the management portal to begin triage sorting.</p>
+                        <p style="max-width: 380px; font-size: 0.9rem;">No patients waiting in queue. Admit patients using the management portal to begin triage sorting and bed allocation.</p>
                         <a href="/home/patient/<%=uname%>" class="btn btn-primary" style="margin-top: 6px;">Admit Patient</a>
                     </div>
                 <% } else { %>
@@ -144,6 +150,7 @@
                                     <th>Wait</th>
                                     <th>Score</th>
                                     <th>Urgency</th>
+                                    <th>Ward &amp; Bed Allocation</th>
                                     <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
@@ -180,6 +187,40 @@
                                         </td>
                                         <td>
                                             <span class="priority-badge <%= badgeClass %>"><%= badgeLabel %></span>
+                                        </td>
+                                        <td>
+                                            <% if (p.allocation_status === 'ALLOCATED') { %>
+                                                <span class="priority-badge badge-standard">
+                                                    🛏️ <%= p.ward_code || 'WARD' %> &bull; <%= p.bed_number %>
+                                                </span>
+                                            <% } else if (p.allocation_status === 'WAITING') { %>
+                                                <span class="priority-badge badge-high">
+                                                    ⏳ Queue (<%= p.ward_code || 'Bed' %>)
+                                                </span>
+                                            <% } else if (p.allocation_status === 'NEEDS_REVIEW') { %>
+                                                <div>
+                                                    <span class="priority-badge badge-critical" title="Condition requires clinical review">
+                                                        ⚠️ Needs Review
+                                                    </span>
+                                                    <form method="post" action="/allocation/assign-ward/<%=uname%>" style="display: block; margin-top: 4px;">
+                                                        <input type="hidden" name="patientId" value="<%= p.id %>">
+                                                        <select name="wardCode" class="form-control" style="padding: 2px 6px; font-size: 0.75rem; height: 26px; width: 110px;" onchange="this.form.submit()">
+                                                            <option value="">Assign Ward...</option>
+                                                            <option value="ICU">ICU</option>
+                                                            <option value="EMG">Emergency</option>
+                                                            <option value="PED">Pediatric</option>
+                                                            <option value="INF">Infectious</option>
+                                                            <option value="GEN">General</option>
+                                                        </select>
+                                                    </form>
+                                                </div>
+                                            <% } else if (p.allocation_status === 'DISCHARGED') { %>
+                                                <span class="priority-badge badge-moderate">
+                                                    ✅ Discharged
+                                                </span>
+                                            <% } else { %>
+                                                <span class="priority-badge badge-standard">Registered</span>
+                                            <% } %>
                                         </td>
                                         <td style="text-align: right;">
                                             <form method="get" action="/history/<%= p.id %>/<%=uname%>" style="display: inline-block;">

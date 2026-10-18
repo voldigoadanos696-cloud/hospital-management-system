@@ -64,6 +64,12 @@
                     </div>
                 </div>
 
+                <% if (typeof alert !== 'undefined' && alert && alert.message) { %>
+                    <div class="alert-banner alert-banner-<%= alert.type || 'error' %>" role="alert">
+                        <span><%= alert.message %></span>
+                    </div>
+                <% } %>
+
                 <div class="management-grid">
                     <!-- Patient Admission Card -->
                     <div class="card-box">
@@ -75,37 +81,71 @@
                             <span class="priority-badge badge-standard">Admission</span>
                         </div>
 
-                        <form method="post" action="/list/<%=uname%>" id="add-patient-form">
+                        <form method="post" action="/list/<%=uname%>" id="add-patient-form" novalidate>
                             <div class="form-2col">
                                 <div class="form-group">
-                                    <label for="l-id" class="form-label">Patient ID</label>
-                                    <input type="number" placeholder="e.g. 101" name="pid" class="form-control"
-                                        id="l-id" required>
+                                    <label for="l-id" class="form-label">
+                                        Patient ID <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="number" placeholder="e.g. 101" name="pid"
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.pid) ? 'is-invalid' : '' %>"
+                                        id="l-id" min="1" max="2147483647" required
+                                        value="<%= typeof formData !== 'undefined' && formData && formData.pid != null ? formData.pid : '' %>"
+                                        aria-describedby="error-pid"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.pid) ? 'true' : 'false' %>">
+                                    <span class="form-error-msg" id="error-pid"><%= (typeof errors !== 'undefined' && errors && errors.pid) ? errors.pid : '' %></span>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="l-name" class="form-label">Patient Full Name</label>
-                                    <input type="text" placeholder="e.g. John Doe" name="pname" class="form-control"
-                                        id="l-name" required>
+                                    <label for="l-name" class="form-label">
+                                        Patient Full Name <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="text" placeholder="e.g. John Doe" name="pname"
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.pname) ? 'is-invalid' : '' %>"
+                                        id="l-name" maxlength="100" required
+                                        value="<%= typeof formData !== 'undefined' && formData && formData.pname != null ? formData.pname : '' %>"
+                                        aria-describedby="error-pname"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.pname) ? 'true' : 'false' %>">
+                                    <span class="form-error-msg" id="error-pname"><%= (typeof errors !== 'undefined' && errors && errors.pname) ? errors.pname : '' %></span>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="l-age" class="form-label">Age (Years)</label>
-                                    <input type="number" placeholder="e.g. 45" name="page" class="form-control"
-                                        id="l-age" min="0" max="130" required>
+                                    <label for="l-age" class="form-label">
+                                        Age (Years) <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="number" placeholder="e.g. 45" name="page"
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.page) ? 'is-invalid' : '' %>"
+                                        id="l-age" min="0" max="130" required
+                                        value="<%= typeof formData !== 'undefined' && formData && formData.page != null ? formData.page : '' %>"
+                                        aria-describedby="error-page"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.page) ? 'true' : 'false' %>">
+                                    <span class="form-error-msg" id="error-page"><%= (typeof errors !== 'undefined' && errors && errors.page) ? errors.page : '' %></span>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="l-wait" class="form-label">Wait Time (Hours)</label>
-                                    <input type="number" placeholder="e.g. 3" name="pwait" class="form-control"
-                                        id="l-wait" min="0" required>
+                                    <label for="l-wait" class="form-label">
+                                        Wait Time (Hours) <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="number" placeholder="e.g. 3" name="pwait"
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.pwait) ? 'is-invalid' : '' %>"
+                                        id="l-wait" min="0" max="720" required
+                                        value="<%= typeof formData !== 'undefined' && formData && formData.pwait != null ? formData.pwait : '' %>"
+                                        aria-describedby="error-pwait"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.pwait) ? 'true' : 'false' %>">
+                                    <span class="form-error-msg" id="error-pwait"><%= (typeof errors !== 'undefined' && errors && errors.pwait) ? errors.pwait : '' %></span>
                                 </div>
 
                                 <div class="form-group form-full">
-                                    <label for="l-dis" class="form-label">Disease / Condition</label>
+                                    <label for="l-dis" class="form-label">
+                                        Disease / Condition <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
                                     <input type="text" list="disease-list"
                                         placeholder="e.g. Heart Attack, Malaria, Dengue..." name="pdis"
-                                        class="form-control" id="l-dis" required autocomplete="off">
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.pdis) ? 'is-invalid' : '' %>"
+                                        id="l-dis" maxlength="100" required autocomplete="off"
+                                        value="<%= typeof formData !== 'undefined' && formData && formData.pdis != null ? formData.pdis : '' %>"
+                                        aria-describedby="error-pdis"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.pdis) ? 'true' : 'false' %>">
                                     <datalist id="disease-list">
                                         <option value="Heart Attack"></option>
                                         <option value="Stroke"></option>
@@ -118,23 +158,30 @@
                                         <option value="Fever"></option>
                                         <option value="Cold"></option>
                                     </datalist>
+                                    <span class="form-error-msg" id="error-pdis"><%= (typeof errors !== 'undefined' && errors && errors.pdis) ? errors.pdis : '' %></span>
                                 </div>
 
                                 <div class="form-group form-full">
-                                    <label for="l-descp" class="form-label">Clinical Description / Notes</label>
+                                    <label for="l-descp" class="form-label">
+                                        Clinical Description / Notes <span class="required-indicator" aria-hidden="true">*</span>
+                                    </label>
                                     <textarea placeholder="Enter brief diagnosis notes or symptoms..." name="descp"
-                                        class="form-control" id="l-descp" required></textarea>
+                                        class="form-control <%= (typeof errors !== 'undefined' && errors && errors.descp) ? 'is-invalid' : '' %>"
+                                        id="l-descp" maxlength="200" required
+                                        aria-describedby="error-descp"
+                                        aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.descp) ? 'true' : 'false' %>"><%= typeof formData !== 'undefined' && formData && formData.descp != null ? formData.descp : '' %></textarea>
+                                    <div class="form-field-meta">
+                                        <span class="form-error-msg" id="error-descp"><%= (typeof errors !== 'undefined' && errors && errors.descp) ? errors.descp : '' %></span>
+                                        <span class="char-count" id="descp-count">0 / 200</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Real-time Score Preview matching backend getScore -->
+                            <!-- Real-time Score & Clinical Ward Preview matching backend -->
                             <div class="score-preview-box">
                                 <div>
-                                    <strong style="font-size: 0.85rem; color: var(--primary-navy);">Estimated Triage
-                                        Score:</strong>
-                                    <span
-                                        style="font-size: 0.78rem; color: var(--text-muted); display: block;">Calculated
-                                        using Age, Disease &amp; Wait formula</span>
+                                    <strong style="font-size: 0.85rem; color: var(--primary-navy);">Estimated Triage Score &amp; Ward:</strong>
+                                    <span style="font-size: 0.78rem; color: var(--text-muted); display: block;" id="estimated-ward-val">Ward: Enter condition &amp; age</span>
                                 </div>
                                 <div style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--primary-blue);"
                                     id="estimated-score-val">--</div>
@@ -157,11 +204,18 @@
                             <span class="priority-badge badge-critical">Discharge</span>
                         </div>
 
-                        <form method="POST" action="/list/<%=uname%>?_method=DELETE" id="discharge-form">
+                        <form method="POST" action="/list/<%=uname%>?_method=DELETE" id="discharge-form" novalidate>
                             <div class="form-group">
-                                <label for="l-rem" class="form-label">Patient ID to Discharge</label>
-                                <input type="number" placeholder="Enter Patient ID" name="pid" class="form-control"
-                                    id="l-rem" required>
+                                <label for="l-rem" class="form-label">
+                                    Patient ID to Discharge <span class="required-indicator" aria-hidden="true">*</span>
+                                </label>
+                                <input type="number" placeholder="Enter Patient ID" name="pid"
+                                    class="form-control <%= (typeof errors !== 'undefined' && errors && errors.dischargePid) ? 'is-invalid' : '' %>"
+                                    id="l-rem" min="1" max="2147483647" required
+                                    value="<%= typeof dischargeData !== 'undefined' && dischargeData && dischargeData.pid != null ? dischargeData.pid : '' %>"
+                                    aria-describedby="error-dischargePid"
+                                    aria-invalid="<%= (typeof errors !== 'undefined' && errors && errors.dischargePid) ? 'true' : 'false' %>">
+                                <span class="form-error-msg" id="error-dischargePid"><%= (typeof errors !== 'undefined' && errors && errors.dischargePid) ? errors.dischargePid : '' %></span>
                             </div>
 
                             <button type="submit" class="btn btn-danger btn-block" id="l-btn2"

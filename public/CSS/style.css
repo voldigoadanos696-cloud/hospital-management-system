@@ -1072,3 +1072,75 @@ textarea.form-control {
     padding: 20px;
   }
 }
+
+/* ---------- 13. Form Validation Feedback & States ---------- */
+.form-label .required-indicator {
+  color: var(--urgency-critical);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.form-control.is-invalid {
+  border-color: var(--urgency-critical) !important;
+  background-color: var(--urgency-critical-bg);
+}
+
+.form-control.is-valid {
+  border-color: var(--urgency-standard) !important;
+}
+
+.form-error-msg {
+  display: none;
+  font-size: 0.8rem;
+  color: var(--urgency-critical);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.form-error-msg:not(:empty) {
+  display: block;
+}
+
+.form-field-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.char-count {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-left: auto;
+}
+
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.alert-banner-error {
+  background: var(--urgency-critical-bg);
+  color: var(--urgency-critical);
+  border: 1px solid var(--urgency-critical);
+}
+
+.alert-banner-success {
+  background: var(--urgency-standard-bg);
+  color: var(--urgency-standard);
+  border: 1px solid var(--urgency-standard);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
