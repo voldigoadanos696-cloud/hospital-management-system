@@ -1,0 +1,228 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-inner">
+            <a href="/home/<%=uname%>" class="brand-logo">
+                <div class="brand-icon-box">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-7a2 2 0 0 1 2-2h4v9"/>
+                        <path d="M3 13h18"/>
+                        <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/>
+                        <path d="M16 6v4M14 8h4"/>
+                    </svg>
+                </div>
+                <span>HOSPITAL <span class="accent">SPACE</span></span>
+            </a>
+
+            <nav>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="/home/<%=uname%>" class="nav-link">Home</a></li>
+                    <li><a href="/home/patient/<%=uname%>" class="nav-link">Manage Patients</a></li>
+                    <li><a href="/history/<%=uname%>" class="nav-link">Track Patients</a></li>
+                    <li><a href="/discharged/<%=uname%>" class="nav-link active">Discharged Patients</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <span class="user-avatar-dot"></span>
+                    <span><%= uname %></span>
+                </div>
+
+                <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <a href="/" class="btn btn-secondary btn-sm">Sign Out</a>
+
+                <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <main class="app-container">
+            <div class="section-header section-header-flex">
+                <div>
+                    <div class="section-subtitle">Clinical Records &amp; Inpatient Audit</div>
+                    <h1 class="section-title">Discharged Patients History</h1>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="/history/<%=uname%>" class="btn btn-secondary">
+                        <span>Live Priority Queue</span>
+                    </a>
+                    <a href="/home/<%=uname%>" class="btn btn-primary">
+                        <span>Ward Dashboard</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary Chips -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-green">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= dischargedPatients.length %></div>
+                        <div class="stat-name">Total Discharged</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-blue">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <% 
+                            let totalStay = 0;
+                            for (let dp of dischargedPatients) {
+                                totalStay += Number(dp.length_of_stay_hours || 0);
+                            }
+                            let avgStay = dischargedPatients.length > 0 ? (totalStay / dischargedPatients.length).toFixed(1) : 0;
+                        %>
+                        <div class="stat-val"><%= avgStay %> hrs</div>
+                        <div class="stat-name">Avg Stay Duration</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discharged Patients Table Card -->
+            <div class="table-card">
+                <div class="table-toolbar">
+                    <div class="search-wrap">
+                        <input type="text" id="discharge-search" class="search-input" placeholder="Search by patient name, ID, ward, or bed...">
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-mono);">
+                        Historical Records Preserved: <strong>Permanent</strong>
+                    </div>
+                </div>
+
+                <% if (dischargedPatients.length === 0) { %>
+                    <div class="empty-state">
+                        <div style="font-size: 2.5rem;">📋</div>
+                        <h3>No Discharged Patients Yet</h3>
+                        <p style="font-size: 0.9rem;">Patients who complete inpatient treatment and are discharged will be archived here with their previous ward, bed, and dates.</p>
+                        <a href="/home/patient/<%=uname%>" class="btn btn-primary" style="margin-top: 8px;">Go to Patient Management</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-scroll">
+                        <table class="app-table" id="discharged-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Age</th>
+                                    <th>Condition</th>
+                                    <th>Previous Ward</th>
+                                    <th>Previous Bed</th>
+                                    <th>Admission Date</th>
+                                    <th>Discharge Date</th>
+                                    <th>Length of Stay</th>
+                                    <th style="text-align: right;">Clinical Dossier</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% for (let p of dischargedPatients) { %>
+                                    <tr>
+                                        <td><strong style="font-family: var(--font-mono);">#<%= p.patient_id %></strong></td>
+                                        <td><strong><%= p.patient_name %></strong></td>
+                                        <td><%= p.patient_age %> yrs</td>
+                                        <td><%= p.patient_condition %></td>
+                                        <td>
+                                            <span class="priority-badge badge-standard">
+                                                <%= p.previous_ward_name ? (p.previous_ward_name + ' (' + p.previous_ward_code + ')') : 'Unassigned' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong style="font-family: var(--font-mono); color: var(--primary-navy);">
+                                                <%= p.previous_bed_number ? ('🛏️ ' + p.previous_bed_number) : '--' %>
+                                            </strong>
+                                        </td>
+                                        <td style="font-size: 0.82rem; color: var(--text-muted);">
+                                            <%= p.admission_date ? new Date(p.admission_date).toLocaleString() : 'N/A' %>
+                                        </td>
+                                        <td style="font-size: 0.82rem; color: var(--urgency-standard); font-weight: 600;">
+                                            <%= p.discharged_at ? new Date(p.discharged_at).toLocaleString() : 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <span class="score-pill" style="font-size: 0.8rem;">
+                                                <%= p.length_of_stay_hours != null ? p.length_of_stay_hours + 'h' : '--' %>
+                                            </span>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <a href="/history/<%= p.patient_id %>/<%= uname %>" class="btn btn-secondary btn-sm">
+                                                View Dossier
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="app-container footer-inner">
+            <div><strong>HOSPITAL SPACE</strong> &mdash; Priority Queue System</div>
+            <div>Computer Engineering Mini Project</div>
+        </div>
+    </footer>
+
+    <script>
+        // Real-time table search filter
+        const searchInput = document.getElementById('discharge-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const term = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#discharged-table tbody tr');
+                rows.forEach(r => {
+                    r.style.display = r.textContent.toLowerCase().includes(term) ? '' : 'none';
+                });
+            });
+        }
+
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        if (hamburgerBtn && navMenu) {
+            hamburgerBtn.addEventListener('click', () => {
+                const isOpen = navMenu.classList.toggle('open');
+                hamburgerBtn.classList.toggle('open', isOpen);
+            });
+        }
+    </script>
+</body>
+</html>

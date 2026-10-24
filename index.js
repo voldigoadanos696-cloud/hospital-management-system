@@ -6,7 +6,11 @@ const {
     manualAssignWard,
     updateBedMaintenanceStatus,
     getHospitalBedSummary,
-    classifyWardSuitability
+    classifyWardSuitability,
+    addCustomWard,
+    getWardDetails,
+    transferPatient,
+    getDischargedPatients
 } = require("./services/bedAllocationService");
 
 class PriorityQueue {
@@ -182,9 +186,37 @@ app.post("/register", (req, res) => {
 });
 
 // home page
-app.get("/home/:uname", (req, res) => {
+app.get("/home/:uname", async (req, res) => {
     let { uname } = req.params;
-    res.render("home.ejs", { uname });
+    let bedSummary = { wards: [], totals: {} };
+    let totalPatients = 0;
+    let criticalPatients = 0;
+    try {
+        bedSummary = await getHospitalBedSummary(connection, uname);
+        const [counts] = await new Promise((resolve) => {
+            connection.query(
+                `SELECT 
+                    COUNT(DISTINCT p.id) as total,
+                    COUNT(DISTINCT CASE WHEN p.score >= 50 THEN p.id END) as critical
+                 FROM patient p
+                 LEFT JOIN bed_allocation a ON p.id = a.patient_id AND p.uname = a.uname
+                 WHERE p.uname = ? AND COALESCE(a.status, 'WAITING') IN ('ALLOCATED', 'WAITING', 'NEEDS_REVIEW')`,
+                [uname],
+                (err, rows) => resolve(rows || [{ total: 0, critical: 0 }])
+            );
+        });
+        totalPatients = counts ? Number(counts.total || 0) : 0;
+        criticalPatients = counts ? Number(counts.critical || 0) : 0;
+    } catch (bErr) {
+        console.error("Bed summary error in home route:", bErr);
+    }
+    res.render("home.ejs", {
+        uname,
+        bedSummary,
+        totalPatients,
+        criticalPatients,
+        alert: null
+    });
 });
 
 app.get("/home/patient/:uname", async (req, res) => {
@@ -368,6 +400,98 @@ app.post("/allocation/bed-status/:uname", async (req, res) => {
     res.redirect(`/history/${uname}`);
 });
 
+// CREATE DYNAMIC WARD CATEGORY
+app.post("/wards/create/:uname", async (req, res) => {
+    let { uname } = req.params;
+    let { name, code, totalBeds, description } = req.body;
+    try {
+        await addCustomWard(connection, {
+            uname,
+            name,
+            code,
+            totalBeds,
+            description
+        });
+        res.redirect(`/home/${uname}`);
+    } catch (err) {
+        console.error("Ward creation error:", err.message);
+        let bedSummary = { wards: [], totals: {} };
+        try { bedSummary = await getHospitalBedSummary(connection, uname); } catch (e) {}
+        res.status(400).render("home.ejs", {
+            uname,
+            bedSummary,
+            totalPatients: 0,
+            criticalPatients: 0,
+            alert: { type: "error", message: `Failed to create ward: ${err.message}` }
+        });
+    }
+});
+
+// WARD DETAIL ALLOCATION PAGE
+app.get("/wards/:uname/:wardCode", async (req, res) => {
+    let { uname, wardCode } = req.params;
+    try {
+        const details = await getWardDetails(connection, uname, wardCode);
+        if (!details) {
+            return res.redirect(`/home/${uname}`);
+        }
+        res.render("ward_detail.ejs", {
+            uname,
+            ward: details.ward,
+            beds: details.beds,
+            inpatients: details.inpatients,
+            waitingQueue: details.waitingQueue,
+            allWards: details.allWards,
+            stats: details.stats,
+            alert: null
+        });
+    } catch (err) {
+        console.error("Ward detail route error:", err);
+        res.redirect(`/home/${uname}`);
+    }
+});
+
+// PATIENT TRANSFER BETWEEN WARDS
+app.post("/allocation/transfer/:uname", async (req, res) => {
+    let { uname } = req.params;
+    let { patientId, targetWardId, targetBedId, reason, currentWardCode } = req.body;
+    try {
+        await transferPatient(connection, {
+            patientId: Number(patientId),
+            uname,
+            targetWardId: Number(targetWardId),
+            targetBedId: targetBedId ? Number(targetBedId) : null,
+            reason: reason || "Clinical ward transfer"
+        });
+        if (currentWardCode) {
+            return res.redirect(`/wards/${uname}/${currentWardCode}`);
+        }
+        res.redirect(`/history/${uname}`);
+    } catch (err) {
+        console.error("Patient transfer error:", err.message);
+        if (currentWardCode) {
+            return res.redirect(`/wards/${uname}/${currentWardCode}?error=${encodeURIComponent(err.message)}`);
+        }
+        res.redirect(`/history/${uname}`);
+    }
+});
+
+// DISCHARGED PATIENTS HISTORY PAGE
+app.get("/discharged/:uname", async (req, res) => {
+    let { uname } = req.params;
+    try {
+        const dischargedPatients = await getDischargedPatients(connection, uname);
+        res.render("discharged.ejs", {
+            uname,
+            dischargedPatients,
+            alert: null
+        });
+    } catch (err) {
+        console.error("Discharged route error:", err);
+        res.send("An error occurred while loading discharge history.");
+    }
+});
+
 // JSON API FOR LIVE WARD OCCUPANCY METRICS
 app.get("/api/wards/:uname", async (req, res) => {
     let { uname } = req.params;
@@ -398,7 +522,7 @@ app.get("/history/:uname", async (req, res) => {
         LEFT JOIN bed_allocation a ON p.id = a.patient_id AND p.uname = a.uname
         LEFT JOIN bed b ON a.bed_id = b.id AND a.uname = b.uname
         LEFT JOIN ward w ON a.ward_id = w.id AND a.uname = w.uname
-        WHERE p.uname = ?
+        WHERE p.uname = ? AND COALESCE(a.status, 'WAITING') IN ('ALLOCATED', 'WAITING', 'NEEDS_REVIEW')
         ORDER BY p.score DESC, COALESCE(a.queue_entry_time, '2099-01-01') ASC
     `;
 

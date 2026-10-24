@@ -691,6 +691,347 @@ async function getHospitalBedSummary(connection, uname) {
     };
 }
 
+/**
+ * Creates a new custom ward for this hospital staff account and generates initial physical beds.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {Object} params - { uname, name, code, totalBeds, description }
+ * @returns {Promise<Object>}
+ */
+async function addCustomWard(connection, { uname, name, code, totalBeds, description }) {
+    const cleanCode = String(code || "").trim().toUpperCase();
+    const cleanName = String(name || "").trim();
+    const bedsCount = Math.max(1, Math.min(100, parseInt(totalBeds, 10) || 5));
+    const cleanDesc = String(description || "").trim();
+
+    if (!cleanCode || !cleanName) {
+        throw new Error("Ward Name and Code are required.");
+    }
+
+    return await withTransaction(connection, async (conn) => {
+        // Check for duplicate ward code under this user account
+        const existing = await queryAsync(
+            conn,
+            "SELECT id FROM ward WHERE uname = ? AND code = ? LIMIT 1",
+            [uname, cleanCode]
+        );
+
+        if (existing.length > 0) {
+            throw new Error(`Ward with code '${cleanCode}' already exists.`);
+        }
+
+        const insertRes = await queryAsync(
+            conn,
+            `INSERT INTO ward (uname, name, code, total_beds, description, is_custom)
+             VALUES (?, ?, ?, ?, ?, TRUE)`,
+            [uname, cleanName, cleanCode, bedsCount, cleanDesc]
+        );
+        const wardId = insertRes.insertId;
+
+        // Automatically provision physical beds for this new ward
+        for (let i = 1; i <= bedsCount; i++) {
+            const bedNumber = `${cleanCode}-${String(i).padStart(2, "0")}`;
+            await queryAsync(
+                conn,
+                `INSERT INTO bed (ward_id, uname, bed_number, status)
+                 VALUES (?, ?, ?, 'AVAILABLE')`,
+                [wardId, uname, bedNumber]
+            );
+        }
+
+        return {
+            success: true,
+            wardId,
+            wardCode: cleanCode,
+            wardName: cleanName,
+            totalBeds: bedsCount
+        };
+    });
+}
+
+/**
+ * Retrieves detailed information, beds, inpatients, and waiting queue for a specific ward.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {string} uname - Staff username
+ * @param {string} wardCode - Ward code (e.g. ICU, PED)
+ * @returns {Promise<Object|null>}
+ */
+async function getWardDetails(connection, uname, wardCode) {
+    await ensureHospitalWards(connection, uname);
+
+    const cleanCode = String(wardCode || "").trim().toUpperCase();
+    const wardRows = await queryAsync(
+        connection,
+        "SELECT id, name, code, total_beds, description, is_custom FROM ward WHERE uname = ? AND code = ? LIMIT 1",
+        [uname, cleanCode]
+    );
+
+    if (wardRows.length === 0) return null;
+    const ward = wardRows[0];
+
+    // All physical beds in this ward with active occupant details if any
+    const beds = await queryAsync(
+        connection,
+        `SELECT
+            b.id as bed_id,
+            b.bed_number,
+            b.status as bed_status,
+            p.id as patient_id,
+            p.name as patient_name,
+            p.age as patient_age,
+            p.dis as patient_condition,
+            p.score as patient_score,
+            a.allocated_at,
+            a.id as allocation_id
+         FROM bed b
+         LEFT JOIN bed_allocation a ON b.id = a.bed_id AND a.status = 'ALLOCATED' AND a.uname = b.uname
+         LEFT JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
+         WHERE b.ward_id = ? AND b.uname = ?
+         ORDER BY b.id ASC`,
+        [ward.id, uname]
+    );
+
+    // Patients currently admitted in this ward
+    const inpatients = beds
+        .filter(b => b.patient_id != null)
+        .map(b => ({
+            allocationId: b.allocation_id,
+            patientId: b.patient_id,
+            patientName: b.patient_name,
+            age: b.patient_age,
+            condition: b.patient_condition,
+            score: b.patient_score,
+            bedId: b.bed_id,
+            bedNumber: b.bed_number,
+            allocatedAt: b.allocated_at
+        }));
+
+    // Patients waiting specifically for this ward (or needs review)
+    const waitingQueue = await queryAsync(
+        connection,
+        `SELECT
+            a.id as allocation_id,
+            a.patient_id,
+            a.status as allocation_status,
+            a.queue_entry_time,
+            p.name as patient_name,
+            p.age as patient_age,
+            p.dis as patient_condition,
+            p.wait as patient_wait,
+            p.score as patient_score
+         FROM bed_allocation a
+         JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
+         WHERE a.ward_id = ? AND a.uname = ? AND a.status = 'WAITING'
+         ORDER BY p.score DESC, a.queue_entry_time ASC`,
+        [ward.id, uname]
+    );
+
+    const totalBeds = beds.length;
+    const occupiedBeds = beds.filter(b => b.bed_status === 'OCCUPIED').length;
+    const availableBeds = beds.filter(b => b.bed_status === 'AVAILABLE').length;
+    const maintenanceBeds = beds.filter(b => b.bed_status === 'MAINTENANCE').length;
+    const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+
+    // All available wards for transfer target dropdown
+    const allWards = await queryAsync(
+        connection,
+        "SELECT id, name, code FROM ward WHERE uname = ? ORDER BY name ASC",
+        [uname]
+    );
+
+    return {
+        ward,
+        beds,
+        inpatients,
+        waitingQueue,
+        allWards,
+        stats: {
+            totalBeds,
+            occupiedBeds,
+            availableBeds,
+            maintenanceBeds,
+            waitingCount: waitingQueue.length,
+            occupancyRate,
+            isFull: availableBeds === 0
+        }
+    };
+}
+
+/**
+ * Transfers a patient from one ward/bed to another atomically.
+ * Releases previous bed, auto-promotes waiting patient in source ward,
+ * acquires target bed, updates allocation, and records transfer history.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {Object} params - { patientId, uname, targetWardId, targetBedId, reason }
+ * @returns {Promise<Object>}
+ */
+async function transferPatient(connection, { patientId, uname, targetWardId, targetBedId, reason }) {
+    return await withTransaction(connection, async (conn) => {
+        // 1. Locate active ALLOCATED record for this patient
+        const activeAllocs = await queryAsync(
+            conn,
+            `SELECT id, ward_id, bed_id
+             FROM bed_allocation
+             WHERE patient_id = ? AND uname = ? AND status = 'ALLOCATED'
+             LIMIT 1 FOR UPDATE`,
+            [patientId, uname]
+        );
+
+        if (activeAllocs.length === 0) {
+            throw new Error(`Patient #${patientId} does not have an active bed allocation to transfer.`);
+        }
+
+        const currentAlloc = activeAllocs[0];
+        const sourceWardId = currentAlloc.ward_id;
+        const sourceBedId = currentAlloc.bed_id;
+
+        // 2. Locate target ward
+        const targetWards = await queryAsync(
+            conn,
+            "SELECT id, name, code FROM ward WHERE id = ? AND uname = ? LIMIT 1",
+            [targetWardId, uname]
+        );
+        if (targetWards.length === 0) {
+            throw new Error("Target destination ward does not exist.");
+        }
+        const targetWard = targetWards[0];
+
+        // 3. Acquire available bed in target ward
+        let destBed = null;
+        if (targetBedId) {
+            const specificBeds = await queryAsync(
+                conn,
+                `SELECT id, bed_number FROM bed
+                 WHERE id = ? AND ward_id = ? AND uname = ? AND status = 'AVAILABLE'
+                 LIMIT 1 FOR UPDATE`,
+                [targetBedId, targetWard.id, uname]
+            );
+            if (specificBeds.length === 0) {
+                throw new Error("Selected target bed is no longer available.");
+            }
+            destBed = specificBeds[0];
+        } else {
+            const anyAvailable = await queryAsync(
+                conn,
+                `SELECT id, bed_number FROM bed
+                 WHERE ward_id = ? AND uname = ? AND status = 'AVAILABLE'
+                 ORDER BY id ASC LIMIT 1 FOR UPDATE`,
+                [targetWard.id, uname]
+            );
+            if (anyAvailable.length === 0) {
+                throw new Error(`Target ward ${targetWard.name} has no available beds.`);
+            }
+            destBed = anyAvailable[0];
+        }
+
+        // 4. Mark destination bed as OCCUPIED
+        await queryAsync(
+            conn,
+            "UPDATE bed SET status = 'OCCUPIED' WHERE id = ? AND uname = ?",
+            [destBed.id, uname]
+        );
+
+        // 5. Release source bed to AVAILABLE
+        if (sourceBedId) {
+            await queryAsync(
+                conn,
+                "UPDATE bed SET status = 'AVAILABLE' WHERE id = ? AND uname = ?",
+                [sourceBedId, uname]
+            );
+
+            // Auto-promote next waiting patient in source ward if any
+            const waitingInSource = await queryAsync(
+                conn,
+                `SELECT a.id as allocation_id, a.patient_id, p.name as patient_name, p.score
+                 FROM bed_allocation a
+                 JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
+                 WHERE a.ward_id = ? AND a.uname = ? AND a.status = 'WAITING'
+                 ORDER BY p.score DESC, a.queue_entry_time ASC
+                 LIMIT 1 FOR UPDATE`,
+                [sourceWardId, uname]
+            );
+
+            if (waitingInSource.length > 0) {
+                const nextInSource = waitingInSource[0];
+                const claimSource = await queryAsync(
+                    conn,
+                    `UPDATE bed SET status = 'OCCUPIED'
+                     WHERE id = ? AND status = 'AVAILABLE' AND uname = ?`,
+                    [sourceBedId, uname]
+                );
+                if (claimSource.affectedRows === 1) {
+                    await queryAsync(
+                        conn,
+                        `UPDATE bed_allocation
+                         SET bed_id = ?, status = 'ALLOCATED', allocated_at = NOW()
+                         WHERE id = ?`,
+                        [sourceBedId, nextInSource.allocation_id]
+                    );
+                }
+            }
+        }
+
+        // 6. Update current patient allocation to new ward and bed
+        await queryAsync(
+            conn,
+            `UPDATE bed_allocation
+             SET ward_id = ?, bed_id = ?, allocated_at = NOW()
+             WHERE id = ?`,
+            [targetWard.id, destBed.id, currentAlloc.id]
+        );
+
+        // 7. Record immutable transfer audit log
+        await queryAsync(
+            conn,
+            `INSERT INTO bed_transfer_history
+             (patient_id, uname, from_ward_id, from_bed_id, to_ward_id, to_bed_id, reason)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [patientId, uname, sourceWardId, sourceBedId, targetWard.id, destBed.id, reason || "Clinical ward transfer"]
+        );
+
+        return {
+            success: true,
+            targetWardName: targetWard.name,
+            targetBedNumber: destBed.bed_number,
+            message: `Patient #${patientId} transferred to ${targetWard.name} (${destBed.bed_number}).`
+        };
+    });
+}
+
+/**
+ * Retrieves all discharged patients and their historical admission/discharge records.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {string} uname - Staff username
+ * @returns {Promise<Array>}
+ */
+async function getDischargedPatients(connection, uname) {
+    const q = `
+        SELECT
+            p.id as patient_id,
+            p.name as patient_name,
+            p.age as patient_age,
+            p.dis as patient_condition,
+            p.score as patient_score,
+            w.name as previous_ward_name,
+            w.code as previous_ward_code,
+            b.bed_number as previous_bed_number,
+            a.queue_entry_time as admission_date,
+            a.allocated_at,
+            a.discharged_at,
+            ROUND(TIMESTAMPDIFF(MINUTE, a.allocated_at, a.discharged_at) / 60, 1) as length_of_stay_hours
+        FROM bed_allocation a
+        JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
+        LEFT JOIN ward w ON a.ward_id = w.id AND a.uname = w.uname
+        LEFT JOIN bed b ON a.bed_id = b.id AND a.uname = b.uname
+        WHERE a.uname = ? AND a.status = 'DISCHARGED'
+        ORDER BY a.discharged_at DESC
+    `;
+    return await queryAsync(connection, q, [uname]);
+}
+
 module.exports = {
     queryAsync,
     withTransaction,
@@ -699,5 +1040,10 @@ module.exports = {
     dischargePatient,
     manualAssignWard,
     updateBedMaintenanceStatus,
-    getHospitalBedSummary
+    getHospitalBedSummary,
+    addCustomWard,
+    getWardDetails,
+    transferPatient,
+    getDischargedPatients
 };
+

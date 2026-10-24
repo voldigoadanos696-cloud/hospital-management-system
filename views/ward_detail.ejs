@@ -1,0 +1,387 @@
+<%- include("includes/head.ejs"); %>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-inner">
+            <a href="/home/<%=uname%>" class="brand-logo">
+                <div class="brand-icon-box">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-7a2 2 0 0 1 2-2h4v9"/>
+                        <path d="M3 13h18"/>
+                        <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/>
+                        <path d="M16 6v4M14 8h4"/>
+                    </svg>
+                </div>
+                <span>HOSPITAL <span class="accent">SPACE</span></span>
+            </a>
+
+            <nav>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="/home/<%=uname%>" class="nav-link">Home</a></li>
+                    <li><a href="/home/patient/<%=uname%>" class="nav-link">Manage Patients</a></li>
+                    <li><a href="/history/<%=uname%>" class="nav-link">Track Patients</a></li>
+                    <li><a href="/discharged/<%=uname%>" class="nav-link">Discharged Patients</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <span class="user-avatar-dot"></span>
+                    <span><%= uname %></span>
+                </div>
+
+                <button id="theme-btn" class="theme-toggle-btn" aria-label="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <a href="/" class="btn btn-secondary btn-sm">Sign Out</a>
+
+                <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <main class="app-container">
+            <!-- Header with Breadcrumbs & Actions -->
+            <div class="section-header section-header-flex">
+                <div>
+                    <div class="section-subtitle">
+                        <a href="/home/<%=uname%>" style="color: var(--primary-blue); text-decoration: none;">&larr; Wards Overview</a> &bull; Ward Code: <strong><%= ward.code %></strong>
+                    </div>
+                    <h1 class="section-title"><%= ward.name %></h1>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="/home/patient/<%=uname%>" class="btn btn-primary">
+                        <span>Admit Patient</span>
+                    </a>
+                    <a href="/home/<%=uname%>" class="btn btn-secondary">
+                        <span>Back to Dashboard</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ward Description Banner if any -->
+            <% if (ward.description && ward.description.trim()) { %>
+                <div style="background: var(--surface-card); border-left: 4px solid var(--primary-blue); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary);">
+                    <strong>Ward Scope:</strong> <%= ward.description %>
+                </div>
+            <% } %>
+
+            <!-- Ward-Specific Statistics Row -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-blue">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= stats.totalBeds %></div>
+                        <div class="stat-name">Ward Capacity</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-green">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-7a2 2 0 0 1 2-2h4v9" /><path d="M3 13h18" /><path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10" /><path d="M16 6v4M14 8h4" /></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= stats.availableBeds %></div>
+                        <div class="stat-name">Available Beds</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-orange">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= stats.occupiedBeds %> (<%= stats.occupancyRate %>%)</div>
+                        <div class="stat-name">Occupied Beds</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-red">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= stats.waitingCount %></div>
+                        <div class="stat-name">Waiting For <%= ward.code %></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Beds Layout Grid -->
+            <div class="card-box" style="margin-bottom: 30px;">
+                <div class="card-box-header">
+                    <div>
+                        <h2>Bed Inventory &amp; Live Status</h2>
+                        <p>Interactive floor plan of physical beds in <%= ward.name %></p>
+                    </div>
+                    <div style="display: flex; gap: 8px; font-size: 0.78rem; font-weight: 600;">
+                        <span class="priority-badge badge-standard">Available (<%= stats.availableBeds %>)</span>
+                        <span class="priority-badge badge-high">Occupied (<%= stats.occupiedBeds %>)</span>
+                        <% if (stats.maintenanceBeds > 0) { %>
+                            <span class="priority-badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-muted);">Maint (<%= stats.maintenanceBeds %>)</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="bed-grid">
+                    <% for (let b of beds) { %>
+                        <%
+                            let tileClass = 'bed-available';
+                            if (b.bed_status === 'OCCUPIED') tileClass = 'bed-occupied';
+                            else if (b.bed_status === 'MAINTENANCE') tileClass = 'bed-maintenance';
+                        %>
+                        <div class="bed-tile <%= tileClass %>">
+                            <div class="bed-num-label"><%= b.bed_number %></div>
+                            <% if (b.bed_status === 'OCCUPIED') { %>
+                                <span class="priority-badge badge-high" style="font-size: 0.72rem; padding: 2px 6px;">Occupied</span>
+                                <div class="bed-occupant-name" title="<%= b.patient_name %> (#<%= b.patient_id %>)">
+                                    <%= b.patient_name %>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">
+                                    #<%= b.patient_id %> &bull; <%= b.patient_score %>pts
+                                </div>
+                            <% } else if (b.bed_status === 'MAINTENANCE') { %>
+                                <span class="priority-badge" style="background: rgba(100, 116, 139, 0.2); color: var(--text-muted); font-size: 0.72rem;">Maintenance</span>
+                                <form method="POST" action="/allocation/bed-status/<%=uname%>" style="margin-top: 6px;">
+                                    <input type="hidden" name="bedId" value="<%= b.bed_id %>">
+                                    <input type="hidden" name="status" value="AVAILABLE">
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 2px 6px;">Set Available</button>
+                                </form>
+                            <% } else { %>
+                                <span class="priority-badge badge-standard" style="font-size: 0.72rem; padding: 2px 6px;">Available</span>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Ready</div>
+                                <form method="POST" action="/allocation/bed-status/<%=uname%>" style="margin-top: 6px;">
+                                    <input type="hidden" name="bedId" value="<%= b.bed_id %>">
+                                    <input type="hidden" name="status" value="MAINTENANCE">
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 2px 6px; opacity: 0.7;">Maintenance</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Current Inpatients Roster -->
+            <div class="table-card" style="margin-bottom: 30px;">
+                <div class="card-box-header" style="border-bottom: none; margin-bottom: 0;">
+                    <div>
+                        <h2>Current Inpatients in <%= ward.name %></h2>
+                        <p>Admitted patients currently receiving clinical care in this ward</p>
+                    </div>
+                </div>
+
+                <% if (inpatients.length === 0) { %>
+                    <div class="empty-state">
+                        <div style="font-size: 2.5rem;">🛏️</div>
+                        <h3>No Inpatients Currently Admitted</h3>
+                        <p style="font-size: 0.9rem;">All beds in this ward are currently open. Waiting patients will be automatically allocated as new admissions arrive.</p>
+                    </div>
+                <% } else { %>
+                    <div class="table-scroll">
+                        <table class="app-table">
+                            <thead>
+                                <tr>
+                                    <th>Bed Number</th>
+                                    <th>Patient ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Age</th>
+                                    <th>Condition</th>
+                                    <th>Priority Score</th>
+                                    <th>Admitted Date</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% for (let p of inpatients) { %>
+                                    <tr>
+                                        <td>
+                                            <strong style="font-family: var(--font-mono); color: var(--primary-blue);">
+                                                🛏️ <%= p.bedNumber %>
+                                            </strong>
+                                        </td>
+                                        <td><strong style="font-family: var(--font-mono);">#<%= p.patientId %></strong></td>
+                                        <td><strong><%= p.patientName %></strong></td>
+                                        <td><%= p.age %> yrs</td>
+                                        <td><%= p.condition %></td>
+                                        <td><span class="score-pill"><%= p.score %></span></td>
+                                        <td style="font-size: 0.82rem; color: var(--text-muted);">
+                                            <%= p.allocatedAt ? new Date(p.allocatedAt).toLocaleString() : 'Just now' %>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="openTransferModal('<%= p.patientId %>', '<%= p.patientName %>', '<%= p.bedNumber %>')">
+                                                    Transfer
+                                                </button>
+                                                <form method="POST" action="/list/<%=uname%>?_method=DELETE" onsubmit="return confirm('Discharge patient <%= p.patientName %> (#<%= p.patientId %>)? Bed will be released.');">
+                                                    <input type="hidden" name="pid" value="<%= p.patientId %>">
+                                                    <button type="submit" class="btn btn-danger btn-sm">Discharge</button>
+                                                </form>
+                                                <a href="/history/<%= p.patientId %>/<%= uname %>" class="btn btn-secondary btn-sm">Dossier</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Waiting Queue for this Ward -->
+            <div class="table-card">
+                <div class="card-box-header" style="border-bottom: none; margin-bottom: 0;">
+                    <div>
+                        <h2>Waiting Queue for <%= ward.name %></h2>
+                        <p>Sorted by Max-Heap Priority Score Descending + FCFS Entry Order</p>
+                    </div>
+                </div>
+
+                <% if (waitingQueue.length === 0) { %>
+                    <div class="empty-state">
+                        <div style="font-size: 2.2rem;">⏳</div>
+                        <h3>No Patients Waiting for this Ward</h3>
+                        <p style="font-size: 0.9rem;">There are no queued patients waiting for admission to <%= ward.name %>.</p>
+                    </div>
+                <% } else { %>
+                    <div class="table-scroll">
+                        <table class="app-table">
+                            <thead>
+                                <tr>
+                                    <th>Queue Rank</th>
+                                    <th>Patient ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Age</th>
+                                    <th>Condition</th>
+                                    <th>Wait Time</th>
+                                    <th>Score</th>
+                                    <th>Queue Entry Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% let qRank = 1; %>
+                                <% for (let w of waitingQueue) { %>
+                                    <tr>
+                                        <td><span class="rank-badge <%= qRank === 1 ? 'rank-top' : '' %>"><%= qRank %></span></td>
+                                        <td><strong style="font-family: var(--font-mono);">#<%= w.patient_id %></strong></td>
+                                        <td><strong><%= w.patient_name %></strong></td>
+                                        <td><%= w.patient_age %> yrs</td>
+                                        <td><%= w.patient_condition %></td>
+                                        <td><%= w.patient_wait != null ? w.patient_wait : 0 %>h</td>
+                                        <td><span class="score-pill"><%= w.patient_score %></span></td>
+                                        <td style="font-size: 0.82rem; color: var(--text-muted);">
+                                            <%= w.queue_entry_time ? new Date(w.queue_entry_time).toLocaleString() : 'N/A' %>
+                                        </td>
+                                    </tr>
+                                    <% qRank++; %>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Patient Transfer Modal Dialog -->
+            <div class="modal-overlay" id="transfer-modal">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">Transfer Patient Between Wards</h3>
+                        <button type="button" class="modal-close-btn" onclick="closeTransferModal()">&times;</button>
+                    </div>
+                    <form method="POST" action="/allocation/transfer/<%= uname %>">
+                        <input type="hidden" name="currentWardCode" value="<%= ward.code %>">
+                        <input type="hidden" id="transfer-pid-input" name="patientId" value="">
+
+                        <div style="background: var(--surface-alt); padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px;">
+                            <div>Patient: <strong id="transfer-pname-display">--</strong></div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted);">Current Bed: <span id="transfer-bed-display">--</span> (<%= ward.name %>)</div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label class="form-label" for="target-ward-select">Destination Ward <span class="required-indicator">*</span></label>
+                            <select id="target-ward-select" name="targetWardId" class="form-control" required>
+                                <option value="">Select Destination Ward...</option>
+                                <% for (let destWard of allWards) { %>
+                                    <% if (destWard.id !== ward.id) { %>
+                                        <option value="<%= destWard.id %>"><%= destWard.name %> (<%= destWard.code %>)</option>
+                                    <% } %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label" for="transfer-reason">Clinical Transfer Reason</label>
+                            <input type="text" id="transfer-reason" name="reason" class="form-control" placeholder="e.g. Post-op step-down, condition escalated to ICU...">
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="closeTransferModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Complete Ward Transfer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="app-container footer-inner">
+            <div><strong>HOSPITAL SPACE</strong> &mdash; Priority Queue System</div>
+            <div>Computer Engineering Mini Project</div>
+        </div>
+    </footer>
+
+    <script>
+        function openTransferModal(pid, pname, bedNumber) {
+            document.getElementById('transfer-pid-input').value = pid;
+            document.getElementById('transfer-pname-display').textContent = pname + ' (#' + pid + ')';
+            document.getElementById('transfer-bed-display').textContent = bedNumber;
+            const m = document.getElementById('transfer-modal');
+            if (m) m.classList.add('open');
+        }
+        function closeTransferModal() {
+            const m = document.getElementById('transfer-modal');
+            if (m) m.classList.remove('open');
+        }
+        window.addEventListener('click', (e) => {
+            const m = document.getElementById('transfer-modal');
+            if (e.target === m) closeTransferModal();
+        });
+
+        const btn = document.getElementById('theme-btn');
+        const icon = document.getElementById('theme-icon');
+        function sync() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        }
+        sync();
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('hospital_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('hospital_theme', 'dark');
+                }
+                sync();
+            });
+        }
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        if (hamburgerBtn && navMenu) {
+            hamburgerBtn.addEventListener('click', () => {
+                const isOpen = navMenu.classList.toggle('open');
+                hamburgerBtn.classList.toggle('open', isOpen);
+            });
+        }
+    </script>
+</body>
+</html>

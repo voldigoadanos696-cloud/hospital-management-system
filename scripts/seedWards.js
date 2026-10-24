@@ -34,6 +34,18 @@ const DEFAULT_WARD_PROFILES = [
         code: "GEN",
         totalBeds: 8,
         prefix: "GEN"
+    },
+    {
+        name: "Maternity Ward",
+        code: "MAT",
+        totalBeds: 6,
+        prefix: "MAT"
+    },
+    {
+        name: "Surgical Ward",
+        code: "SUR",
+        totalBeds: 6,
+        prefix: "SUR"
     }
 ];
 

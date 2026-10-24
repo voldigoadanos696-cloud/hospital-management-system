@@ -20,6 +20,7 @@
                     <li><a href="/home/<%=uname%>" class="nav-link active">Home</a></li>
                     <li><a href="/home/patient/<%=uname%>" class="nav-link">Manage Patients</a></li>
                     <li><a href="/history/<%=uname%>" class="nav-link">Track Patients</a></li>
+                    <li><a href="/discharged/<%=uname%>" class="nav-link">Discharged Patients</a></li>
                 </ul>
             </nav>
 
@@ -52,53 +53,170 @@
                     Prioritize patient treatment and bed allocation using a Max-Heap priority queue. Medical urgency is dynamically calculated based on patient condition, age group, and elapsed wait time.
                 </p>
 
-                <!-- Action Cards -->
-                <div class="home-action-grid">
-                    <article class="action-card">
-                        <div class="action-card-header">
-                            <div class="action-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Manage Patients</h3>
-                                <p>Admit new patients into the triage queue or discharge patients upon completion of treatment.</p>
-                            </div>
-                        </div>
-                        <div>
-                            <a href="/home/patient/<%=uname%>" class="btn btn-primary btn-block">
-                                <span>Admission &amp; Discharge</span>
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </a>
-                        </div>
-                    </article>
+            <!-- Hospital-Wide Statistics Overview -->
+            <div class="stats-row" style="margin-top: 10px; margin-bottom: 30px;">
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-blue">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= typeof totalPatients !== 'undefined' ? totalPatients : 0 %></div>
+                        <div class="stat-name">Total Patients</div>
+                    </div>
+                </div>
 
-                    <article class="action-card">
-                        <div class="action-card-header">
-                            <div class="action-icon">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Track Patients</h3>
-                                <p>Monitor the live priority queue sorted in descending score order by the backend Max-Heap.</p>
-                            </div>
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-green">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-7a2 2 0 0 1 2-2h4v9" />
+                            <path d="M3 13h18" />
+                            <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10" />
+                            <path d="M16 6v4M14 8h4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val">
+                            <%= typeof bedSummary !== 'undefined' && bedSummary.totals ? (bedSummary.totals.total_available || 0) : 0 %> / <%= typeof bedSummary !== 'undefined' && bedSummary.totals ? (bedSummary.totals.total_beds || 0) : 0 %>
                         </div>
-                        <div>
-                            <a href="/history/<%=uname%>" class="btn btn-secondary btn-block">
-                                <span>View Live Priority Queue</span>
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <div class="stat-name">Beds Available</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-orange">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= typeof bedSummary !== 'undefined' && bedSummary.totals ? (bedSummary.totals.total_waiting || 0) : 0 %></div>
+                        <div class="stat-name">Waiting For Bed</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-red">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= typeof criticalPatients !== 'undefined' ? criticalPatients : 0 %></div>
+                        <div class="stat-name">Critical (&ge;50 pts)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Ward Management Section -->
+            <section style="margin-bottom: 40px;">
+                <div class="section-header section-header-flex">
+                    <div>
+                        <div class="section-subtitle">Real-Time Capacity &amp; Beds</div>
+                        <h2 class="section-title">Ward Management</h2>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" onclick="openAddWardModal()">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add Ward Category</span>
+                        </button>
+                    </div>
+                </div>
+
+                <% if (typeof alert !== 'undefined' && alert && alert.message) { %>
+                    <div class="alert-banner alert-banner-<%= alert.type || 'success' %>">
+                        <span><%= alert.message %></span>
+                    </div>
+                <% } %>
+
+                <!-- Dynamic Ward Cards -->
+                <div class="wards-grid">
+                    <% if (typeof bedSummary !== 'undefined' && bedSummary.wards && bedSummary.wards.length > 0) { %>
+                        <% for (let ward of bedSummary.wards) { %>
+                            <% 
+                                let barColor = "var(--urgency-standard)";
+                                if (ward.occupancy_rate >= 90) barColor = "var(--urgency-critical)";
+                                else if (ward.occupancy_rate >= 70) barColor = "var(--urgency-high)";
+                                else if (ward.occupancy_rate >= 40) barColor = "var(--urgency-moderate)";
+                            %>
+                            <a href="/wards/<%= uname %>/<%= ward.ward_code %>" class="ward-card" id="ward-card-<%= ward.ward_code %>">
+                                <div class="ward-card-header">
+                                    <span class="ward-badge-pill"><%= ward.ward_code %></span>
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: <%= barColor %>;">
+                                        <%= ward.occupancy_rate %>% Full
+                                    </span>
+                                </div>
+                                <div class="ward-card-title"><%= ward.ward_name %></div>
+                                <div class="ward-card-desc">
+                                    <%= ward.is_full ? '⚠️ Maximum capacity reached' : 'Click to inspect beds, allocate or transfer patients.' %>
+                                </div>
+                                <div class="ward-progress-bar-wrap">
+                                    <div class="ward-progress-fill" style="width: <%= ward.occupancy_rate %>%; background: <%= barColor %>;"></div>
+                                </div>
+                                <div class="ward-stats-grid">
+                                    <div>
+                                        <div class="ward-stat-label">Total</div>
+                                        <div class="ward-stat-num"><%= ward.total_beds %></div>
+                                    </div>
+                                    <div>
+                                        <div class="ward-stat-label">Occupied</div>
+                                        <div class="ward-stat-num" style="color: var(--urgency-high);"><%= ward.occupied_beds %></div>
+                                    </div>
+                                    <div>
+                                        <div class="ward-stat-label">Available</div>
+                                        <div class="ward-stat-num" style="color: var(--urgency-standard);"><%= ward.available_beds %></div>
+                                    </div>
+                                </div>
                             </a>
+                        <% } %>
+                    <% } else { %>
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <h3>No Wards Initialized</h3>
+                            <p>Default wards are being provisioned from the database.</p>
                         </div>
-                    </article>
+                    <% } %>
                 </div>
             </section>
+
+            <!-- Modal for Adding New Ward Category -->
+            <div class="modal-overlay" id="add-ward-modal">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">Add New Ward Category</h3>
+                        <button type="button" class="modal-close-btn" onclick="closeAddWardModal()">&times;</button>
+                    </div>
+                    <form method="POST" action="/wards/create/<%= uname %>">
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label class="form-label" for="ward-name">Ward Name <span class="required-indicator">*</span></label>
+                            <input type="text" id="ward-name" name="name" class="form-control" placeholder="e.g. Oncology Ward" required maxlength="50">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label class="form-label" for="ward-code">Ward Code (3-5 letters) <span class="required-indicator">*</span></label>
+                            <input type="text" id="ward-code" name="code" class="form-control" placeholder="e.g. ONC" required maxlength="10" style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label class="form-label" for="ward-beds">Initial Bed Capacity <span class="required-indicator">*</span></label>
+                            <input type="number" id="ward-beds" name="totalBeds" class="form-control" value="6" min="1" max="100" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label" for="ward-desc">Clinical Description / Notes</label>
+                            <textarea id="ward-desc" name="description" class="form-control" placeholder="Brief purpose or specialty of this ward..." rows="2" maxlength="255"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="closeAddWardModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create Ward Category</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -111,6 +229,19 @@
     </footer>
 
     <script>
+        function openAddWardModal() {
+            const m = document.getElementById('add-ward-modal');
+            if (m) m.classList.add('open');
+        }
+        function closeAddWardModal() {
+            const m = document.getElementById('add-ward-modal');
+            if (m) m.classList.remove('open');
+        }
+        window.addEventListener('click', (e) => {
+            const m = document.getElementById('add-ward-modal');
+            if (e.target === m) closeAddWardModal();
+        });
+
         const btn = document.getElementById('theme-btn');
         const icon = document.getElementById('theme-icon');
         function sync() {
