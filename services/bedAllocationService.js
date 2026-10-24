@@ -17,6 +17,43 @@ function queryAsync(connection, sql, params = []) {
 }
 
 /**
+ * Executes a callback within a dedicated database connection and transaction.
+ * Works seamlessly whether `db` is a Pool or Connection.
+ *
+ * @param {Object} db - mysql2 pool or connection
+ * @param {Function} callback - async (conn) => Promise<any>
+ * @returns {Promise<any>}
+ */
+async function withTransaction(db, callback) {
+    let conn = db;
+    let shouldRelease = false;
+
+    if (typeof db.getConnection === "function") {
+        conn = await new Promise((resolve, reject) => {
+            db.getConnection((err, connection) => {
+                if (err) reject(err);
+                else resolve(connection);
+            });
+        });
+        shouldRelease = true;
+    }
+
+    try {
+        await queryAsync(conn, "START TRANSACTION");
+        const result = await callback(conn);
+        await queryAsync(conn, "COMMIT");
+        return result;
+    } catch (err) {
+        await queryAsync(conn, "ROLLBACK").catch(() => {});
+        throw err;
+    } finally {
+        if (shouldRelease && conn && typeof conn.release === "function") {
+            conn.release();
+        }
+    }
+}
+
+/**
  * Explicit Clinical Ward Classification Precedence
  * Evaluates patient clinical criteria without relying solely on priority scores.
  * Ambiguous conditions return requiresReview = true.
@@ -113,19 +150,16 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
         };
     }
 
-    // Start transaction for atomic bed acquisition
-    await queryAsync(connection, "START TRANSACTION");
-
-    try {
+    // Execute atomic bed acquisition within an isolated connection transaction
+    return await withTransaction(connection, async (conn) => {
         // 1. Locate suitable ward ID for this staff hospital account
         const wards = await queryAsync(
-            connection,
+            conn,
             "SELECT id, name, code FROM ward WHERE uname = ? AND code = ? LIMIT 1",
             [uname, classification.wardCode]
         );
 
         if (wards.length === 0) {
-            await queryAsync(connection, "ROLLBACK");
             throw new Error(`Ward profile for ${classification.wardCode} not found.`);
         }
 
@@ -133,7 +167,7 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
 
         // 2. Select next available bed with row lock to avoid race conditions
         const availableBeds = await queryAsync(
-            connection,
+            conn,
             `SELECT id, bed_number FROM bed
              WHERE ward_id = ? AND uname = ? AND status = 'AVAILABLE'
              ORDER BY id ASC LIMIT 1 FOR UPDATE`,
@@ -145,7 +179,7 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
 
             // 3. Conditional bed update: verifies status was still AVAILABLE
             const updateResult = await queryAsync(
-                connection,
+                conn,
                 `UPDATE bed SET status = 'OCCUPIED'
                  WHERE id = ? AND status = 'AVAILABLE' AND uname = ?`,
                 [bed.id, uname]
@@ -154,14 +188,12 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
             if (updateResult.affectedRows === 1) {
                 // Successfully secured bed: create active ALLOCATED record
                 await queryAsync(
-                    connection,
+                    conn,
                     `INSERT INTO bed_allocation
                      (patient_id, uname, ward_id, bed_id, status, allocated_at)
                      VALUES (?, ?, ?, ?, 'ALLOCATED', NOW())`,
                     [patientId, uname, ward.id, bed.id]
                 );
-
-                await queryAsync(connection, "COMMIT");
 
                 return {
                     allocated: true,
@@ -177,13 +209,11 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
 
         // 4. Ward is full or bed was claimed concurrently: place in priority waiting queue
         await queryAsync(
-            connection,
+            conn,
             `INSERT INTO bed_allocation (patient_id, uname, ward_id, bed_id, status)
              VALUES (?, ?, ?, NULL, 'WAITING')`,
             [patientId, uname, ward.id]
         );
-
-        await queryAsync(connection, "COMMIT");
 
         return {
             allocated: false,
@@ -193,10 +223,7 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
             bedNumber: null,
             message: `All beds in ${ward.name} are currently occupied. Patient queued by priority score & arrival order.`
         };
-    } catch (err) {
-        await queryAsync(connection, "ROLLBACK").catch(() => {});
-        throw err;
-    }
+    });
 }
 
 /**
@@ -208,12 +235,10 @@ async function allocateBedOnAdmission(connection, { patientId, uname, age, condi
  * @returns {Promise<Object>}
  */
 async function dischargePatient(connection, { patientId, uname }) {
-    await queryAsync(connection, "START TRANSACTION");
-
-    try {
+    return await withTransaction(connection, async (conn) => {
         // 1. Locate active allocation for this patient
         const activeAllocations = await queryAsync(
-            connection,
+            conn,
             `SELECT id, patient_id, uname, ward_id, bed_id, status
              FROM bed_allocation
              WHERE patient_id = ? AND uname = ? AND status IN ('ALLOCATED', 'WAITING', 'NEEDS_REVIEW')
@@ -222,7 +247,6 @@ async function dischargePatient(connection, { patientId, uname }) {
         );
 
         if (activeAllocations.length === 0) {
-            await queryAsync(connection, "ROLLBACK");
             return { success: false, notFound: true, message: `No active allocation found for patient #${patientId}.` };
         }
 
@@ -232,7 +256,7 @@ async function dischargePatient(connection, { patientId, uname }) {
 
         // 2. Mark allocation as DISCHARGED (preserving historical records)
         await queryAsync(
-            connection,
+            conn,
             `UPDATE bed_allocation
              SET status = 'DISCHARGED', discharged_at = NOW()
              WHERE id = ?`,
@@ -245,14 +269,14 @@ async function dischargePatient(connection, { patientId, uname }) {
         // 3. If a physical bed was held, release it
         if (freedBedId) {
             const bedRows = await queryAsync(
-                connection,
+                conn,
                 "SELECT bed_number FROM bed WHERE id = ? AND uname = ?",
                 [freedBedId, uname]
             );
             if (bedRows.length > 0) freedBedNumber = bedRows[0].bed_number;
 
             await queryAsync(
-                connection,
+                conn,
                 "UPDATE bed SET status = 'AVAILABLE' WHERE id = ? AND uname = ?",
                 [freedBedId, uname]
             );
@@ -260,7 +284,7 @@ async function dischargePatient(connection, { patientId, uname }) {
             // 4. Auto-promote next eligible waiting patient for that ward
             // Ordering strictly by: 1) Triage Score Descending, 2) Immutable Queue Entry Time Ascending (FCFS)
             const waitingCandidates = await queryAsync(
-                connection,
+                conn,
                 `SELECT a.id as allocation_id, a.patient_id, a.queue_entry_time, p.name as patient_name, p.score
                  FROM bed_allocation a
                  JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
@@ -275,7 +299,7 @@ async function dischargePatient(connection, { patientId, uname }) {
 
                 // Re-claim the bed for the promoted patient
                 const bedClaimResult = await queryAsync(
-                    connection,
+                    conn,
                     `UPDATE bed SET status = 'OCCUPIED'
                      WHERE id = ? AND status = 'AVAILABLE' AND uname = ?`,
                     [freedBedId, uname]
@@ -283,7 +307,7 @@ async function dischargePatient(connection, { patientId, uname }) {
 
                 if (bedClaimResult.affectedRows === 1) {
                     await queryAsync(
-                        connection,
+                        conn,
                         `UPDATE bed_allocation
                          SET bed_id = ?, status = 'ALLOCATED', allocated_at = NOW()
                          WHERE id = ?`,
@@ -300,8 +324,6 @@ async function dischargePatient(connection, { patientId, uname }) {
             }
         }
 
-        await queryAsync(connection, "COMMIT");
-
         return {
             success: true,
             notFound: false,
@@ -309,10 +331,7 @@ async function dischargePatient(connection, { patientId, uname }) {
             promotedPatient,
             message: `Patient #${patientId} discharged. Bed released and history preserved.`
         };
-    } catch (err) {
-        await queryAsync(connection, "ROLLBACK").catch(() => {});
-        throw err;
-    }
+    });
 }
 
 /**
@@ -323,11 +342,9 @@ async function dischargePatient(connection, { patientId, uname }) {
  * @returns {Promise<Object>}
  */
 async function manualAssignWard(connection, { patientId, uname, wardCode }) {
-    await queryAsync(connection, "START TRANSACTION");
-
-    try {
+    return await withTransaction(connection, async (conn) => {
         const activeAllocations = await queryAsync(
-            connection,
+            conn,
             `SELECT a.id, a.queue_entry_time, p.score, p.age
              FROM bed_allocation a
              JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
@@ -337,20 +354,18 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
         );
 
         if (activeAllocations.length === 0) {
-            await queryAsync(connection, "ROLLBACK");
             return { success: false, message: `No patient with ID #${patientId} awaiting clinical review.` };
         }
 
         const alloc = activeAllocations[0];
 
         const wards = await queryAsync(
-            connection,
+            conn,
             "SELECT id, name, code FROM ward WHERE uname = ? AND code = ? LIMIT 1",
             [uname, wardCode]
         );
 
         if (wards.length === 0) {
-            await queryAsync(connection, "ROLLBACK");
             return { success: false, message: `Ward ${wardCode} does not exist.` };
         }
 
@@ -358,7 +373,7 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
 
         // Check if bed is available in the manually assigned ward
         const availableBeds = await queryAsync(
-            connection,
+            conn,
             `SELECT id, bed_number FROM bed
              WHERE ward_id = ? AND uname = ? AND status = 'AVAILABLE'
              ORDER BY id ASC LIMIT 1 FOR UPDATE`,
@@ -368,7 +383,7 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
         if (availableBeds.length > 0) {
             const bed = availableBeds[0];
             const updateResult = await queryAsync(
-                connection,
+                conn,
                 `UPDATE bed SET status = 'OCCUPIED'
                  WHERE id = ? AND status = 'AVAILABLE' AND uname = ?`,
                 [bed.id, uname]
@@ -376,14 +391,12 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
 
             if (updateResult.affectedRows === 1) {
                 await queryAsync(
-                    connection,
+                    conn,
                     `UPDATE bed_allocation
                      SET ward_id = ?, bed_id = ?, status = 'ALLOCATED', allocated_at = NOW()
                      WHERE id = ?`,
                     [targetWard.id, bed.id, alloc.id]
                 );
-
-                await queryAsync(connection, "COMMIT");
 
                 return {
                     success: true,
@@ -397,14 +410,12 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
 
         // Ward is currently full: move patient into WAITING status for this ward, preserving original queue time
         await queryAsync(
-            connection,
+            conn,
             `UPDATE bed_allocation
              SET ward_id = ?, bed_id = NULL, status = 'WAITING'
              WHERE id = ?`,
             [targetWard.id, alloc.id]
         );
-
-        await queryAsync(connection, "COMMIT");
 
         return {
             success: true,
@@ -413,10 +424,7 @@ async function manualAssignWard(connection, { patientId, uname, wardCode }) {
             bedNumber: null,
             message: `Patient #${patientId} assigned to ${targetWard.name}. All beds currently occupied; patient queued.`
         };
-    } catch (err) {
-        await queryAsync(connection, "ROLLBACK").catch(() => {});
-        throw err;
-    }
+    });
 }
 
 /**
@@ -433,17 +441,14 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
         return { success: false, message: "Status must be either 'MAINTENANCE' or 'AVAILABLE'." };
     }
 
-    await queryAsync(connection, "START TRANSACTION");
-
-    try {
+    return await withTransaction(connection, async (conn) => {
         const bedRows = await queryAsync(
-            connection,
+            conn,
             "SELECT id, ward_id, bed_number, status FROM bed WHERE id = ? AND uname = ? FOR UPDATE",
             [bedId, uname]
         );
 
         if (bedRows.length === 0) {
-            await queryAsync(connection, "ROLLBACK");
             return { success: false, notFound: true, message: `Bed #${bedId} not found.` };
         }
 
@@ -451,24 +456,21 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
 
         if (targetStatus === "MAINTENANCE") {
             if (bed.status === "OCCUPIED") {
-                await queryAsync(connection, "ROLLBACK");
                 return {
                     success: false,
                     message: `Bed ${bed.bed_number} is currently occupied. Discharge patient before scheduling maintenance.`
                 };
             }
             if (bed.status === "MAINTENANCE") {
-                await queryAsync(connection, "COMMIT");
                 return { success: true, message: `Bed ${bed.bed_number} is already in maintenance.` };
             }
 
             await queryAsync(
-                connection,
+                conn,
                 "UPDATE bed SET status = 'MAINTENANCE' WHERE id = ? AND uname = ?",
                 [bed.id, uname]
             );
 
-            await queryAsync(connection, "COMMIT");
             return {
                 success: true,
                 status: "MAINTENANCE",
@@ -478,12 +480,11 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
         } else {
             // targetStatus === "AVAILABLE"
             if (bed.status === "AVAILABLE") {
-                await queryAsync(connection, "COMMIT");
                 return { success: true, message: `Bed ${bed.bed_number} is already available.` };
             }
 
             await queryAsync(
-                connection,
+                conn,
                 "UPDATE bed SET status = 'AVAILABLE' WHERE id = ? AND uname = ?",
                 [bed.id, uname]
             );
@@ -493,7 +494,7 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
             // Auto-promote next eligible waiting patient for that ward
             if (bed.ward_id) {
                 const waitingCandidates = await queryAsync(
-                    connection,
+                    conn,
                     `SELECT a.id as allocation_id, a.patient_id, a.queue_entry_time, p.name as patient_name, p.score
                      FROM bed_allocation a
                      JOIN patient p ON a.patient_id = p.id AND a.uname = p.uname
@@ -506,7 +507,7 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
                 if (waitingCandidates.length > 0) {
                     const nextPatient = waitingCandidates[0];
                     const bedClaimResult = await queryAsync(
-                        connection,
+                        conn,
                         `UPDATE bed SET status = 'OCCUPIED'
                          WHERE id = ? AND status = 'AVAILABLE' AND uname = ?`,
                         [bed.id, uname]
@@ -514,7 +515,7 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
 
                     if (bedClaimResult.affectedRows === 1) {
                         await queryAsync(
-                            connection,
+                            conn,
                             `UPDATE bed_allocation
                              SET bed_id = ?, status = 'ALLOCATED', allocated_at = NOW()
                              WHERE id = ?`,
@@ -531,8 +532,6 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
                 }
             }
 
-            await queryAsync(connection, "COMMIT");
-
             return {
                 success: true,
                 status: promotedPatient ? "OCCUPIED" : "AVAILABLE",
@@ -543,10 +542,7 @@ async function updateBedMaintenanceStatus(connection, { bedId, uname, status }) 
                     : `Bed ${bed.bed_number} restored to available status.`
             };
         }
-    } catch (err) {
-        await queryAsync(connection, "ROLLBACK").catch(() => {});
-        throw err;
-    }
+    });
 }
 
 /**
@@ -696,6 +692,8 @@ async function getHospitalBedSummary(connection, uname) {
 }
 
 module.exports = {
+    queryAsync,
+    withTransaction,
     classifyWardSuitability,
     allocateBedOnAdmission,
     dischargePatient,

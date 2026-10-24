@@ -1,0 +1,1018 @@
+{
+  "login": [
+    {
+      "uname": "Atharv Patil ",
+      "upass": "Atharvpatil19"
+    },
+    {
+      "uname": "ATLAS",
+      "upass": "ATLAS123"
+    },
+    {
+      "uname": "Dy patil",
+      "upass": "Dy patil"
+    },
+    {
+      "uname": "rucha67",
+      "upass": "rucha676767"
+    },
+    {
+      "uname": "sai asha",
+      "upass": "sai asha"
+    },
+    {
+      "uname": "siddhesh",
+      "upass": "sidd"
+    },
+    {
+      "uname": "sies",
+      "upass": "sies"
+    },
+    {
+      "uname": "Suresh Hinge",
+      "upass": "sohamjhatu"
+    },
+    {
+      "uname": "Surya",
+      "upass": "Surya"
+    },
+    {
+      "uname": "Yash Epili",
+      "upass": "Yash123"
+    },
+    {
+      "uname": "Yashu",
+      "upass": "123"
+    }
+  ],
+  "patient": [
+    {
+      "id": 4,
+      "name": "hfds",
+      "dis": "Fever",
+      "age": 32,
+      "wait": 4,
+      "descp": "gergwergergergege\r\nnot expected from you",
+      "score": 30,
+      "uname": "sies"
+    },
+    {
+      "id": 5,
+      "name": "Akash Singh",
+      "dis": "Heart Attack",
+      "age": 45,
+      "wait": 1,
+      "descp": "Common symptoms include chest pressure, squeezing, or pain; discomfort in the arm, back, neck, jaw, or stomach; shortness of breath; cold sweat; nausea; or lightheadedness. Symptoms can vary, and some",
+      "score": 40,
+      "uname": "sies"
+    },
+    {
+      "id": 10,
+      "name": "Rucha Vinod Dhanawade",
+      "dis": "Vomiting ",
+      "age": 19,
+      "wait": 2,
+      "descp": "Frequent vomiting ",
+      "score": 20,
+      "uname": "rucha67"
+    },
+    {
+      "id": 10,
+      "name": "ravi kishan",
+      "dis": "Stroke",
+      "age": 45,
+      "wait": 3,
+      "descp": "money follows my brada\r\ndaam yah naam daam",
+      "score": 45,
+      "uname": "sies"
+    },
+    {
+      "id": 12,
+      "name": "srinivas",
+      "dis": "Heart Attack",
+      "age": 45,
+      "wait": 10,
+      "descp": "id pehenke waapas aa gate seh",
+      "score": 55,
+      "uname": "sies"
+    },
+    {
+      "id": 101,
+      "name": "John",
+      "dis": "Typhoid",
+      "age": 32,
+      "wait": 2,
+      "descp": "High fever, cancer",
+      "score": 35,
+      "uname": "Dy patil"
+    },
+    {
+      "id": 102,
+      "name": "Niranjan Chavan",
+      "dis": "Stroke",
+      "age": 20,
+      "wait": 2,
+      "descp": "Ulti ho rahi hai ",
+      "score": 45,
+      "uname": "Atharv Patil"
+    }
+  ],
+  "ward": [
+    {
+      "id": 1,
+      "uname": "sies",
+      "name": "Intensive Care Unit",
+      "code": "ICU",
+      "total_beds": 4,
+      "created_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 2,
+      "uname": "sies",
+      "name": "Emergency & Trauma Ward",
+      "code": "EMG",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 3,
+      "uname": "sies",
+      "name": "Pediatric Care Ward",
+      "code": "PED",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 4,
+      "uname": "sies",
+      "name": "Infectious Disease Ward",
+      "code": "INF",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 5,
+      "uname": "sies",
+      "name": "General Medical Ward",
+      "code": "GEN",
+      "total_beds": 8,
+      "created_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 11,
+      "uname": "test_hospital_unit",
+      "name": "Intensive Care Unit",
+      "code": "ICU",
+      "total_beds": 4,
+      "created_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 12,
+      "uname": "test_hospital_unit",
+      "name": "Emergency & Trauma Ward",
+      "code": "EMG",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 13,
+      "uname": "test_hospital_unit",
+      "name": "Pediatric Care Ward",
+      "code": "PED",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 14,
+      "uname": "test_hospital_unit",
+      "name": "Infectious Disease Ward",
+      "code": "INF",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 15,
+      "uname": "test_hospital_unit",
+      "name": "General Medical Ward",
+      "code": "GEN",
+      "total_beds": 8,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 16,
+      "uname": "test_hospital_other",
+      "name": "Intensive Care Unit",
+      "code": "ICU",
+      "total_beds": 4,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 17,
+      "uname": "test_hospital_other",
+      "name": "Emergency & Trauma Ward",
+      "code": "EMG",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 18,
+      "uname": "test_hospital_other",
+      "name": "Pediatric Care Ward",
+      "code": "PED",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 19,
+      "uname": "test_hospital_other",
+      "name": "Infectious Disease Ward",
+      "code": "INF",
+      "total_beds": 6,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 20,
+      "uname": "test_hospital_other",
+      "name": "General Medical Ward",
+      "code": "GEN",
+      "total_beds": 8,
+      "created_at": "2026-10-18T05:22:34.000Z"
+    }
+  ],
+  "bed": [
+    {
+      "id": 1,
+      "ward_id": 1,
+      "uname": "sies",
+      "bed_number": "ICU-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T14:13:56.000Z"
+    },
+    {
+      "id": 2,
+      "ward_id": 1,
+      "uname": "sies",
+      "bed_number": "ICU-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T14:13:09.000Z"
+    },
+    {
+      "id": 3,
+      "ward_id": 1,
+      "uname": "sies",
+      "bed_number": "ICU-03",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T14:01:10.000Z"
+    },
+    {
+      "id": 4,
+      "ward_id": 1,
+      "uname": "sies",
+      "bed_number": "ICU-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 5,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 6,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 7,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 8,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 9,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 10,
+      "ward_id": 2,
+      "uname": "sies",
+      "bed_number": "EMG-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 11,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 12,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 13,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 14,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 15,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 16,
+      "ward_id": 3,
+      "uname": "sies",
+      "bed_number": "PED-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 17,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 18,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 19,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 20,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 21,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 22,
+      "ward_id": 4,
+      "uname": "sies",
+      "bed_number": "INF-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 23,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-01",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:32:44.000Z"
+    },
+    {
+      "id": 24,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 25,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 26,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 27,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 28,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 29,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-07",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:00.000Z"
+    },
+    {
+      "id": 30,
+      "ward_id": 5,
+      "uname": "sies",
+      "bed_number": "GEN-08",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:17:01.000Z"
+    },
+    {
+      "id": 61,
+      "ward_id": 11,
+      "uname": "test_hospital_unit",
+      "bed_number": "ICU-01",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:22:40.000Z"
+    },
+    {
+      "id": 62,
+      "ward_id": 11,
+      "uname": "test_hospital_unit",
+      "bed_number": "ICU-02",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:22:36.000Z"
+    },
+    {
+      "id": 63,
+      "ward_id": 11,
+      "uname": "test_hospital_unit",
+      "bed_number": "ICU-03",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:22:37.000Z"
+    },
+    {
+      "id": 64,
+      "ward_id": 11,
+      "uname": "test_hospital_unit",
+      "bed_number": "ICU-04",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:22:38.000Z"
+    },
+    {
+      "id": 65,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:45:48.000Z"
+    },
+    {
+      "id": 66,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 67,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 68,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 69,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 70,
+      "ward_id": 12,
+      "uname": "test_hospital_unit",
+      "bed_number": "EMG-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 71,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 72,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 73,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 74,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 75,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 76,
+      "ward_id": 13,
+      "uname": "test_hospital_unit",
+      "bed_number": "PED-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:33.000Z"
+    },
+    {
+      "id": 77,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 78,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 79,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 80,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 81,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 82,
+      "ward_id": 14,
+      "uname": "test_hospital_unit",
+      "bed_number": "INF-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 83,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-01",
+      "status": "OCCUPIED",
+      "updated_at": "2026-10-18T05:22:41.000Z"
+    },
+    {
+      "id": 84,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 85,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 86,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 87,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 88,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 89,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-07",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 90,
+      "ward_id": 15,
+      "uname": "test_hospital_unit",
+      "bed_number": "GEN-08",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 91,
+      "ward_id": 16,
+      "uname": "test_hospital_other",
+      "bed_number": "ICU-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 92,
+      "ward_id": 16,
+      "uname": "test_hospital_other",
+      "bed_number": "ICU-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 93,
+      "ward_id": 16,
+      "uname": "test_hospital_other",
+      "bed_number": "ICU-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 94,
+      "ward_id": 16,
+      "uname": "test_hospital_other",
+      "bed_number": "ICU-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 95,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 96,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 97,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 98,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 99,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 100,
+      "ward_id": 17,
+      "uname": "test_hospital_other",
+      "bed_number": "EMG-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 101,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 102,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 103,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 104,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 105,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 106,
+      "ward_id": 18,
+      "uname": "test_hospital_other",
+      "bed_number": "PED-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 107,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 108,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 109,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 110,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 111,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 112,
+      "ward_id": 19,
+      "uname": "test_hospital_other",
+      "bed_number": "INF-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 113,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-01",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 114,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-02",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 115,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-03",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 116,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-04",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:34.000Z"
+    },
+    {
+      "id": 117,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-05",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:35.000Z"
+    },
+    {
+      "id": 118,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-06",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:35.000Z"
+    },
+    {
+      "id": 119,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-07",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:35.000Z"
+    },
+    {
+      "id": 120,
+      "ward_id": 20,
+      "uname": "test_hospital_other",
+      "bed_number": "GEN-08",
+      "status": "AVAILABLE",
+      "updated_at": "2026-10-18T05:22:35.000Z"
+    }
+  ],
+  "bed_allocation": [
+    {
+      "id": 10,
+      "patient_id": 10,
+      "uname": "sies",
+      "ward_id": 1,
+      "bed_id": 1,
+      "status": "DISCHARGED",
+      "queue_entry_time": "2026-10-18T05:28:00.000Z",
+      "allocated_at": "2026-10-18T05:28:00.000Z",
+      "discharged_at": "2026-10-18T14:13:56.000Z",
+      "created_at": "2026-10-18T05:28:00.000Z",
+      "active_patient_id": null
+    },
+    {
+      "id": 11,
+      "patient_id": 4,
+      "uname": "sies",
+      "ward_id": 5,
+      "bed_id": 23,
+      "status": "ALLOCATED",
+      "queue_entry_time": "2026-10-18T05:32:44.000Z",
+      "allocated_at": "2026-10-18T05:32:44.000Z",
+      "discharged_at": null,
+      "created_at": "2026-10-18T05:32:44.000Z",
+      "active_patient_id": 4
+    },
+    {
+      "id": 12,
+      "patient_id": 12,
+      "uname": "sies",
+      "ward_id": 1,
+      "bed_id": 2,
+      "status": "DISCHARGED",
+      "queue_entry_time": "2026-10-18T05:49:13.000Z",
+      "allocated_at": "2026-10-18T05:49:13.000Z",
+      "discharged_at": "2026-10-18T14:13:09.000Z",
+      "created_at": "2026-10-18T05:49:13.000Z",
+      "active_patient_id": null
+    },
+    {
+      "id": 13,
+      "patient_id": 5,
+      "uname": "sies",
+      "ward_id": 1,
+      "bed_id": 3,
+      "status": "ALLOCATED",
+      "queue_entry_time": "2026-10-18T14:01:10.000Z",
+      "allocated_at": "2026-10-18T14:01:10.000Z",
+      "discharged_at": null,
+      "created_at": "2026-10-18T14:01:10.000Z",
+      "active_patient_id": 5
+    }
+  ]
+}
