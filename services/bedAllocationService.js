@@ -1032,6 +1032,232 @@ async function getDischargedPatients(connection, uname) {
     return await queryAsync(connection, q, [uname]);
 }
 
+/**
+ * Retrieves the retention policy settings for a hospital staff account.
+ * Defaults to 90 days if not yet customized.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {string} uname - Staff username
+ * @returns {Promise<Object>}
+ */
+async function getRetentionSettings(connection, uname) {
+    const rows = await queryAsync(
+        connection,
+        "SELECT discharge_retention_days, auto_cleanup_enabled, updated_at FROM hospital_settings WHERE uname = ? LIMIT 1",
+        [uname]
+    );
+
+    if (rows.length > 0) {
+        return {
+            dischargeRetentionDays: Number(rows[0].discharge_retention_days),
+            autoCleanupEnabled: Boolean(rows[0].auto_cleanup_enabled),
+            updatedAt: rows[0].updated_at
+        };
+    }
+
+    const defaultDays = parseInt(process.env.DISCHARGE_RETENTION_DAYS, 10) || 90;
+    return {
+        dischargeRetentionDays: defaultDays,
+        autoCleanupEnabled: false,
+        updatedAt: null
+    };
+}
+
+/**
+ * Updates or sets the retention policy settings for a hospital staff account.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {Object} params - { uname, days, autoCleanupEnabled }
+ * @returns {Promise<Object>}
+ */
+async function updateRetentionSettings(connection, { uname, days, autoCleanupEnabled }) {
+    const cleanDays = Math.max(1, Math.min(3650, parseInt(days, 10) || 90));
+    const isAuto = Boolean(autoCleanupEnabled);
+
+    await queryAsync(
+        connection,
+        `INSERT INTO hospital_settings (uname, discharge_retention_days, auto_cleanup_enabled)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+             discharge_retention_days = VALUES(discharge_retention_days),
+             auto_cleanup_enabled = VALUES(auto_cleanup_enabled)`,
+        [uname, cleanDays, isAuto]
+    );
+
+    return {
+        success: true,
+        dischargeRetentionDays: cleanDays,
+        autoCleanupEnabled: isAuto
+    };
+}
+
+/**
+ * Previews expired discharged patients eligible for retention cleanup without deleting anything.
+ * Guarantees distinct patient IDs, ignores patients with any active allocation, and scopes strictly to uname.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {Object} params - { uname, retentionDays }
+ * @returns {Promise<Array>}
+ */
+async function previewExpiredDischargedPatients(connection, { uname, retentionDays }) {
+    const days = Math.max(1, parseInt(retentionDays, 10) || 90);
+
+    const q = `
+        SELECT 
+            p.id as patient_id,
+            p.name as patient_name,
+            p.dis as patient_condition,
+            MAX(a.discharged_at) as latest_discharge_date,
+            DATEDIFF(NOW(), MAX(a.discharged_at)) as days_since_discharge
+        FROM patient p
+        JOIN bed_allocation a ON p.id = a.patient_id AND p.uname = a.uname
+        WHERE p.uname = ?
+          AND a.status = 'DISCHARGED'
+          AND a.discharged_at <= DATE_SUB(NOW(), INTERVAL ? DAY)
+          AND p.id NOT IN (
+              SELECT DISTINCT active_a.patient_id
+              FROM bed_allocation active_a
+              WHERE active_a.uname = ?
+                AND active_a.status IN ('ALLOCATED', 'WAITING', 'NEEDS_REVIEW')
+          )
+        GROUP BY p.id, p.name, p.dis
+        ORDER BY latest_discharge_date ASC
+    `;
+    return await queryAsync(connection, q, [uname, days, uname]);
+}
+
+/**
+ * Idempotently and safely purges expired discharged patients beyond the retention period.
+ * Strictly transactional: guarantees distinct candidate IDs, never deletes active patients,
+ * cascades cleanly to allocations and transfer history, and records an auditable cleanup log.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @param {Object} params - { uname, retentionDays, triggerType }
+ * @returns {Promise<Object>}
+ */
+async function purgeExpiredDischargedPatients(connection, { uname, retentionDays, triggerType = 'MANUAL' }) {
+    const days = Math.max(1, parseInt(retentionDays, 10) || 90);
+
+    return await withTransaction(connection, async (conn) => {
+        // Step 1: Select distinct candidate patient IDs eligible for deletion
+        const candidates = await queryAsync(conn, `
+            SELECT 
+                p.id as patient_id,
+                p.name as patient_name,
+                MAX(a.discharged_at) as latest_discharge_date
+            FROM patient p
+            JOIN bed_allocation a ON p.id = a.patient_id AND p.uname = a.uname
+            WHERE p.uname = ?
+              AND a.status = 'DISCHARGED'
+              AND a.discharged_at <= DATE_SUB(NOW(), INTERVAL ? DAY)
+              AND p.id NOT IN (
+                  SELECT DISTINCT active_a.patient_id
+                  FROM bed_allocation active_a
+                  WHERE active_a.uname = ?
+                    AND active_a.status IN ('ALLOCATED', 'WAITING', 'NEEDS_REVIEW')
+              )
+            GROUP BY p.id, p.name
+            ORDER BY latest_discharge_date ASC
+        `, [uname, days, uname]);
+
+        if (candidates.length === 0) {
+            return {
+                purgedCount: 0,
+                candidateIds: [],
+                retentionDays: days,
+                message: `No discharged patient records older than ${days} days found for cleanup.`
+            };
+        }
+
+        const candidateIds = candidates.map(c => c.patient_id);
+        const placeholders = candidateIds.map(() => '?').join(',');
+
+        // Step 2: Delete expired patient records (cascades cleanly to bed_allocation & bed_transfer_history)
+        const deleteParams = [uname, ...candidateIds];
+        const deleteRes = await queryAsync(conn, `
+            DELETE FROM patient
+            WHERE uname = ? AND id IN (${placeholders})
+        `, deleteParams);
+
+        const purgedCount = deleteRes.affectedRows || 0;
+
+        // Step 3: Record immutable audit log
+        await queryAsync(conn, `
+            INSERT INTO retention_cleanup_audit
+            (uname, trigger_type, retention_days, patients_purged_count, details)
+            VALUES (?, ?, ?, ?, ?)
+        `, [
+            uname,
+            triggerType,
+            days,
+            purgedCount,
+            `Purged patient IDs: ${candidateIds.join(', ')}`
+        ]);
+
+        return {
+            purgedCount,
+            candidateIds,
+            retentionDays: days,
+            triggerType,
+            message: `Successfully cleaned up ${purgedCount} expired patient records older than ${days} days.`
+        };
+    });
+}
+
+/**
+ * Scheduled Daily Retention Cleanup Runner.
+ * Inspects all hospital accounts where auto_cleanup_enabled is TRUE,
+ * reads each account's configured retention period, and executes safe cleanup.
+ *
+ * @param {Object} connection - mysql2 pool or connection
+ * @returns {Promise<Object>}
+ */
+async function runDailyRetentionScheduler(connection) {
+    const activeAccounts = await queryAsync(
+        connection,
+        "SELECT uname, discharge_retention_days FROM hospital_settings WHERE auto_cleanup_enabled = TRUE"
+    );
+
+    const results = [];
+    for (const acc of activeAccounts) {
+        try {
+            const outcome = await purgeExpiredDischargedPatients(connection, {
+                uname: acc.uname,
+                retentionDays: acc.discharge_retention_days,
+                triggerType: 'SCHEDULED_DAILY'
+            });
+            results.push({ uname: acc.uname, outcome });
+        } catch (err) {
+            console.error(`[SCHEDULED CLEANUP ERROR] Account '${acc.uname}':`, err.message);
+            results.push({ uname: acc.uname, error: err.message });
+        }
+    }
+    return results;
+}
+
+/**
+ * Starts an in-process daily interval timer to trigger runDailyRetentionScheduler.
+ * Runs once every 24 hours (86,400,000 ms).
+ *
+ * @param {Object} connection - mysql2 pool
+ * @returns {NodeJS.Timeout}
+ */
+function startRetentionCron(connection) {
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const timer = setInterval(async () => {
+        try {
+            console.log('[RETENTION SCHEDULER] Running daily automatic retention check...');
+            await runDailyRetentionScheduler(connection);
+        } catch (e) {
+            console.error('[RETENTION SCHEDULER ERROR]:', e);
+        }
+    }, TWENTY_FOUR_HOURS);
+
+    // Ensure timer doesn't prevent Node process from graceful exit if needed
+    if (timer.unref) timer.unref();
+    return timer;
+}
+
 module.exports = {
     queryAsync,
     withTransaction,
@@ -1044,6 +1270,12 @@ module.exports = {
     addCustomWard,
     getWardDetails,
     transferPatient,
-    getDischargedPatients
+    getDischargedPatients,
+    getRetentionSettings,
+    updateRetentionSettings,
+    previewExpiredDischargedPatients,
+    purgeExpiredDischargedPatients,
+    runDailyRetentionScheduler,
+    startRetentionCron
 };
 

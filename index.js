@@ -10,7 +10,12 @@ const {
     addCustomWard,
     getWardDetails,
     transferPatient,
-    getDischargedPatients
+    getDischargedPatients,
+    getRetentionSettings,
+    updateRetentionSettings,
+    previewExpiredDischargedPatients,
+    purgeExpiredDischargedPatients,
+    startRetentionCron
 } = require("./services/bedAllocationService");
 
 class PriorityQueue {
@@ -481,14 +486,83 @@ app.get("/discharged/:uname", async (req, res) => {
     let { uname } = req.params;
     try {
         const dischargedPatients = await getDischargedPatients(connection, uname);
+        const retentionSettings = await getRetentionSettings(connection, uname);
+        const expiredPreview = await previewExpiredDischargedPatients(connection, {
+            uname,
+            retentionDays: retentionSettings.dischargeRetentionDays
+        });
+
         res.render("discharged.ejs", {
             uname,
             dischargedPatients,
+            retentionSettings,
+            expiredCount: expiredPreview.length,
             alert: null
         });
     } catch (err) {
         console.error("Discharged route error:", err);
         res.send("An error occurred while loading discharge history.");
+    }
+});
+
+// UPDATE RETENTION POLICY SETTINGS
+app.post("/discharged/retention-settings/:uname", async (req, res) => {
+    let { uname } = req.params;
+    let { days, autoCleanupEnabled } = req.body;
+    try {
+        await updateRetentionSettings(connection, {
+            uname,
+            days: parseInt(days, 10),
+            autoCleanupEnabled: autoCleanupEnabled === "true" || autoCleanupEnabled === "on" || autoCleanupEnabled === true
+        });
+        res.redirect(`/discharged/${uname}`);
+    } catch (err) {
+        console.error("Update retention error:", err);
+        res.redirect(`/discharged/${uname}`);
+    }
+});
+
+// JSON API: PREVIEW EXPIRED PATIENTS FOR DRY RUN
+app.get("/discharged/preview-cleanup/:uname", async (req, res) => {
+    let { uname } = req.params;
+    let { days } = req.query;
+    try {
+        const retentionSettings = await getRetentionSettings(connection, uname);
+        const effectiveDays = days ? parseInt(days, 10) : retentionSettings.dischargeRetentionDays;
+        const expired = await previewExpiredDischargedPatients(connection, {
+            uname,
+            retentionDays: effectiveDays
+        });
+        res.json({ success: true, count: expired.length, expired });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ADMIN-AUTHORIZED MANUAL CLEANUP TRIGGER
+app.post("/discharged/cleanup/:uname", async (req, res) => {
+    let { uname } = req.params;
+    let { confirmCleanup, retentionDays } = req.body;
+
+    if (confirmCleanup !== "CONFIRM") {
+        return res.status(400).redirect(`/discharged/${uname}?error=Confirmation+required`);
+    }
+
+    try {
+        const settings = await getRetentionSettings(connection, uname);
+        const days = retentionDays ? parseInt(retentionDays, 10) : settings.dischargeRetentionDays;
+
+        const outcome = await purgeExpiredDischargedPatients(connection, {
+            uname,
+            retentionDays: days,
+            triggerType: "MANUAL"
+        });
+
+        console.log(`[MANUAL RETENTION CLEANUP] ${outcome.message}`);
+        res.redirect(`/discharged/${uname}`);
+    } catch (err) {
+        console.error("Manual cleanup error:", err);
+        res.redirect(`/discharged/${uname}`);
     }
 });
 
@@ -595,6 +669,9 @@ const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    // Start automatic daily retention cleanup timer
+    startRetentionCron(connection);
+    console.log('[RETENTION CRON] Daily discharged patient cleanup scheduler initialized.');
 });
 
 

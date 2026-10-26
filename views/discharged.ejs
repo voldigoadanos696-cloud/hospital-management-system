@@ -60,7 +60,7 @@
                 </div>
             </div>
 
-            <!-- Summary Chips -->
+            <!-- Summary Chips & Retention Settings Card -->
             <div class="stats-row">
                 <div class="stat-item">
                     <div class="stat-icon-circle stat-icon-green">
@@ -93,6 +93,138 @@
                         <div class="stat-val"><%= avgStay %> hrs</div>
                         <div class="stat-name">Avg Stay Duration</div>
                     </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-orange">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= typeof retentionSettings !== 'undefined' ? retentionSettings.dischargeRetentionDays : 90 %> days</div>
+                        <div class="stat-name">Retention Window</div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon-circle stat-icon-red">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-val"><%= typeof expiredCount !== 'undefined' ? expiredCount : 0 %></div>
+                        <div class="stat-name">Eligible for Cleanup</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retention Policy Configuration & Safe Cleanup Bar -->
+            <div class="card-box" style="margin-bottom: 24px; padding: 20px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h3 style="margin-bottom: 4px; font-size: 1.05rem;">Data Retention &amp; Automatic Storage Policy</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                            Configure how long completed discharge records remain archived before being safely purged. Active inpatients and waiting queue records are never deleted.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="previewCleanup()">
+                            Preview Expired Records
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="openCleanupModal()">
+                            Run Cleanup Now
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openSettingsModal()">
+                            Configure Policy
+                        </button>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap;">
+                    <span>Automatic Daily Cleanup: <strong><%= (typeof retentionSettings !== 'undefined' && retentionSettings.autoCleanupEnabled) ? '✅ Enabled' : '⏸️ Disabled (Manual Only)' %></strong></span>
+                    <span>Account Scope: <strong><%= uname %></strong></span>
+                </div>
+            </div>
+
+            <!-- Modal: Configure Retention Policy -->
+            <div class="modal-overlay" id="settings-modal">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">Configure Retention Policy</h3>
+                        <button type="button" class="modal-close-btn" onclick="closeSettingsModal()">&times;</button>
+                    </div>
+                    <form method="POST" action="/discharged/retention-settings/<%= uname %>">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label" for="retention-days">Retention Period (Days) <span class="required-indicator">*</span></label>
+                            <select id="retention-days" name="days" class="form-control" required>
+                                <option value="30" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.dischargeRetentionDays === 30) ? 'selected' : '' %>>30 Days (1 Month)</option>
+                                <option value="60" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.dischargeRetentionDays === 60) ? 'selected' : '' %>>60 Days (2 Months)</option>
+                                <option value="90" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.dischargeRetentionDays === 90) ? 'selected' : '' %>>90 Days (Default - 3 Months)</option>
+                                <option value="180" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.dischargeRetentionDays === 180) ? 'selected' : '' %>>180 Days (6 Months)</option>
+                                <option value="365" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.dischargeRetentionDays === 365) ? 'selected' : '' %>>365 Days (1 Year)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; cursor: pointer;">
+                                <input type="checkbox" name="autoCleanupEnabled" value="true" <%= (typeof retentionSettings !== 'undefined' && retentionSettings.autoCleanupEnabled) ? 'checked' : '' %>>
+                                <span>Enable Daily Automatic Background Cleanup</span>
+                            </label>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                                When enabled, our daily scheduler checks for records exceeding your configured retention window.
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Retention Policy</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: Dry Run Preview Results -->
+            <div class="modal-overlay" id="preview-modal">
+                <div class="modal-box" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">Expired Discharged Records Preview</h3>
+                        <button type="button" class="modal-close-btn" onclick="closePreviewModal()">&times;</button>
+                    </div>
+                    <div id="preview-content" style="max-height: 320px; overflow-y: auto; margin-bottom: 16px;">
+                        <p>Loading preview...</p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">Close Preview</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: Confirm Manual Cleanup -->
+            <div class="modal-overlay" id="cleanup-modal">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3 style="margin: 0; color: var(--urgency-critical);">Confirm Storage Cleanup</h3>
+                        <button type="button" class="modal-close-btn" onclick="closeCleanupModal()">&times;</button>
+                    </div>
+                    <form method="POST" action="/discharged/cleanup/<%= uname %>">
+                        <p style="font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                            This operation will permanently purge all discharged patient records and associated transfer logs older than <strong><%= typeof retentionSettings !== 'undefined' ? retentionSettings.dischargeRetentionDays : 90 %> days</strong>.
+                        </p>
+                        <div style="background: var(--urgency-critical-bg); color: var(--urgency-critical); padding: 12px; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 16px;">
+                            ⚠️ Type <strong>CONFIRM</strong> below to execute this transactional cleanup.
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <input type="text" name="confirmCleanup" class="form-control" placeholder="Type CONFIRM" required autocomplete="off">
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="closeCleanupModal()">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Execute Storage Cleanup</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -183,6 +315,73 @@
     </footer>
 
     <script>
+        function openSettingsModal() {
+            const m = document.getElementById('settings-modal');
+            if (m) m.classList.add('open');
+        }
+        function closeSettingsModal() {
+            const m = document.getElementById('settings-modal');
+            if (m) m.classList.remove('open');
+        }
+
+        function openCleanupModal() {
+            const m = document.getElementById('cleanup-modal');
+            if (m) m.classList.add('open');
+        }
+        function closeCleanupModal() {
+            const m = document.getElementById('cleanup-modal');
+            if (m) m.classList.remove('open');
+        }
+
+        async function previewCleanup() {
+            const m = document.getElementById('preview-modal');
+            const content = document.getElementById('preview-content');
+            if (m && content) {
+                m.classList.add('open');
+                content.innerHTML = '<p style="padding: 10px; color: var(--text-muted);">Fetching expired records preview from database...</p>';
+                try {
+                    const res = await fetch('/discharged/preview-cleanup/<%= uname %>');
+                    const data = await res.json();
+                    if (data.success) {
+                        if (data.count === 0) {
+                            content.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--urgency-standard); font-weight: 600;">✅ No records currently exceed the retention threshold. Storage is fully compliant.</div>';
+                        } else {
+                            let html = `<p style="font-size: 0.85rem; margin-bottom: 10px;">Found <strong>${data.count}</strong> records eligible for safe deletion:</p>`;
+                            html += '<table class="app-table" style="font-size: 0.82rem;"><thead><tr><th>ID</th><th>Name</th><th>Condition</th><th>Latest Discharge</th><th>Elapsed Days</th></tr></thead><tbody>';
+                            for (let p of data.expired) {
+                                html += `<tr>
+                                    <td>#${p.patient_id}</td>
+                                    <td><strong>${p.patient_name}</strong></td>
+                                    <td>${p.patient_condition}</td>
+                                    <td>${new Date(p.latest_discharge_date).toLocaleDateString()}</td>
+                                    <td><span class="score-pill">${p.days_since_discharge}d</span></td>
+                                </tr>`;
+                            }
+                            html += '</tbody></table>';
+                            content.innerHTML = html;
+                        }
+                    } else {
+                        content.innerHTML = `<p style="color: var(--urgency-critical);">Error loading preview: ${data.error}</p>`;
+                    }
+                } catch (e) {
+                    content.innerHTML = `<p style="color: var(--urgency-critical);">Network error fetching preview.</p>`;
+                }
+            }
+        }
+        function closePreviewModal() {
+            const m = document.getElementById('preview-modal');
+            if (m) m.classList.remove('open');
+        }
+
+        window.addEventListener('click', (e) => {
+            const sm = document.getElementById('settings-modal');
+            const cm = document.getElementById('cleanup-modal');
+            const pm = document.getElementById('preview-modal');
+            if (e.target === sm) closeSettingsModal();
+            if (e.target === cm) closeCleanupModal();
+            if (e.target === pm) closePreviewModal();
+        });
+
         // Real-time table search filter
         const searchInput = document.getElementById('discharge-search');
         if (searchInput) {
